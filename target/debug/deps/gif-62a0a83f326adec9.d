@@ -1,0 +1,12 @@
+C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\deps\gif-62a0a83f326adec9.d: C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\lib.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\traits.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\common.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\mod.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\decoder.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\converter.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\encoder.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\../README.md
+
+C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\deps\libgif-62a0a83f326adec9.rmeta: C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\lib.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\traits.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\common.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\mod.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\decoder.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\converter.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\encoder.rs C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\../README.md
+
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\lib.rs:
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\traits.rs:
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\common.rs:
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\mod.rs:
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\decoder.rs:
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\reader\converter.rs:
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\encoder.rs:
+C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\gif-0.13.3\src\../README.md:

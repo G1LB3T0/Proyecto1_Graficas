@@ -1,0 +1,127 @@
+cargo:rerun-if-changed=build.rs
+cargo:rerun-if-changed=./binding/binding.h
+CMAKE_TOOLCHAIN_FILE_x86_64-pc-windows-msvc = None
+CMAKE_TOOLCHAIN_FILE_x86_64_pc_windows_msvc = None
+HOST_CMAKE_TOOLCHAIN_FILE = None
+CMAKE_TOOLCHAIN_FILE = None
+CMAKE_GENERATOR_x86_64-pc-windows-msvc = None
+CMAKE_GENERATOR_x86_64_pc_windows_msvc = None
+HOST_CMAKE_GENERATOR = None
+CMAKE_GENERATOR = None
+CMAKE_PREFIX_PATH_x86_64-pc-windows-msvc = None
+CMAKE_PREFIX_PATH_x86_64_pc_windows_msvc = None
+HOST_CMAKE_PREFIX_PATH = None
+CMAKE_PREFIX_PATH = None
+CMAKE_x86_64-pc-windows-msvc = None
+CMAKE_x86_64_pc_windows_msvc = None
+HOST_CMAKE = None
+CMAKE = None
+running: "cmake" "C:\\Users\\luisy\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\raylib-sys-5.5.1\\./raylib" "-G" "Visual Studio 17 2022" "-Thost=x64" "-Ax64" "-DCMAKE_BUILD_TYPE=Debug" "-DBUILD_EXAMPLES=OFF" "-DCMAKE_BUILD_TYPE=Debug" "-DSUPPORT_BUSY_WAIT_LOOP=OFF" "-DSUPPORT_FILEFORMAT_JPG=ON" "-DUSE_WAYLAND=OFF" "-DOPENGL_VERSION=OFF" "-DSUPPORT_SCREEN_CAPTURE=ON" "-DSUPPORT_GIF_RECORDING=ON" "-DPLATFORM=Desktop" "-DCMAKE_INSTALL_PREFIX=C:\\Users\\luisy\\Desktop\\Graficas\\ProyectoPatzan\\ProyectoPatzan\\target\\debug\\build\\raylib-sys-e49c2503b293fc7c\\out" "-DCMAKE_C_FLAGS= -nologo -MD -Brepro" "-DCMAKE_C_FLAGS_DEBUG= -nologo -MD -Brepro" "-DCMAKE_CXX_FLAGS= -nologo -MD -Brepro" "-DCMAKE_CXX_FLAGS_DEBUG= -nologo -MD -Brepro" "-DCMAKE_ASM_FLAGS= -nologo -MD -Brepro" "-DCMAKE_ASM_FLAGS_DEBUG= -nologo -MD -Brepro"
+-- Selecting Windows SDK version 10.0.22000.0 to target Windows 10.0.26100.
+-- Testing if -Werror=pointer-arith can be used -- Failed
+-- Testing if -Werror=implicit-function-declaration can be used -- Failed
+-- Testing if -fno-strict-aliasing can be used -- Failed
+-- Using raylib's GLFW
+-- Including Win32 support
+-- Audio Backend: miniaudio
+-- Building raylib static library
+-- Generated build type: Debug
+-- Compiling with the flags:
+--   PLATFORM=PLATFORM_DESKTOP
+--   GRAPHICS=GRAPHICS_API_OPENGL_33
+-- Configuring done (0.3s)
+-- Generating done (1.6s)
+-- Build files have been written to: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/build
+running: "cmake" "--build" "C:\\Users\\luisy\\Desktop\\Graficas\\ProyectoPatzan\\ProyectoPatzan\\target\\debug\\build\\raylib-sys-e49c2503b293fc7c\\out\\build" "--target" "install" "--config" "Debug" "--parallel" "8"
+MSBuild version 17.14.14+a129329f1 for .NET Framework
+
+  1>Checking Build System
+  glfw.vcxproj -> C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-e49c2503b293fc7c\out\build\raylib\external\glfw\src\glfw.dir\Debug\glfw.lib
+  Building Custom Rule C:/Users/luisy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/raylib-sys-5.5.1/raylib/src/CMakeLists.txt
+  raudio.c
+  rcore.c
+  rmodels.c
+  rshapes.c
+  rtext.c
+  rtextures.c
+  utils.c
+  Generating Code...
+  raylib.vcxproj -> C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-e49c2503b293fc7c\out\build\raylib\Debug\raylib.lib
+  Building Custom Rule C:/Users/luisy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/raylib-sys-5.5.1/raylib/CMakeLists.txt
+  1>
+  -- Install configuration: "Debug"
+  -- Installing: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/raylib.lib
+  -- Installing: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/include/raylib.h
+  -- Installing: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/include/rlgl.h
+  -- Installing: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/include/raymath.h
+  -- Installing: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/pkgconfig/raylib.pc
+  -- Installing: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/cmake/raylib/raylib-config-version.cmake
+  -- Installing: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/cmake/raylib/raylib-config.cmake
+cargo:root=C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-e49c2503b293fc7c\out
+cargo:rustc-link-search=native=C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-e49c2503b293fc7c\out\lib
+cargo:rustc-link-lib=dylib=winmm
+cargo:rustc-link-lib=dylib=gdi32
+cargo:rustc-link-lib=dylib=user32
+cargo:rustc-link-lib=dylib=shell32
+cargo:rustc-link-lib=static=raylib
+OUT_DIR = Some(C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-e49c2503b293fc7c\out)
+OPT_LEVEL = Some(3)
+TARGET = Some(x86_64-pc-windows-msvc)
+cargo:rerun-if-env-changed=VCINSTALLDIR
+VCINSTALLDIR = None
+cargo:rerun-if-env-changed=VSTEL_MSBuildProjectFullPath
+VSTEL_MSBuildProjectFullPath = None
+cargo:rerun-if-env-changed=VSCMD_ARG_VCVARS_SPECTRE
+VSCMD_ARG_VCVARS_SPECTRE = None
+cargo:rerun-if-env-changed=WindowsSdkDir
+WindowsSdkDir = None
+cargo:rerun-if-env-changed=WindowsSDKVersion
+WindowsSDKVersion = None
+cargo:rerun-if-env-changed=LIB
+LIB = None
+PATH = Some(C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\deps;C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug;C:\Users\luisy\.rustup\toolchains\stable-x86_64-pc-windows-msvc\lib\rustlib\x86_64-pc-windows-msvc\lib;c:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\dotnet\;C:\Program Files\Git\cmd;C:\Users\luisy\AppData\Local\Microsoft\WindowsApps;;C:\Users\luisy\AppData\Local\Programs\Hyper\resources\bin;c:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\nodejs\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\CMake\bin;C:\Users\luisy\.cargo\bin;C:\Users\luisy\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\luisy\AppData\Local\Programs\Python\Python313\;C:\Users\luisy\AppData\Local\Microsoft\WindowsApps;;C:\Users\luisy\AppData\Local\Programs\Hyper\resources\bin;C:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\Users\luisy\AppData\Roaming\npm;C:\Users\luisy\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\luisy\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin)
+cargo:rerun-if-env-changed=INCLUDE
+INCLUDE = None
+HOST = Some(x86_64-pc-windows-msvc)
+cargo:rerun-if-env-changed=CC_x86_64-pc-windows-msvc
+CC_x86_64-pc-windows-msvc = None
+cargo:rerun-if-env-changed=CC_x86_64_pc_windows_msvc
+CC_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=HOST_CC
+HOST_CC = None
+cargo:rerun-if-env-changed=CC
+CC = None
+cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+CRATE_CC_NO_DEFAULTS = None
+CARGO_CFG_TARGET_FEATURE = Some(cmpxchg16b,fxsr,sse,sse2,sse3)
+DEBUG = Some(false)
+cargo:rerun-if-env-changed=CFLAGS
+CFLAGS = None
+cargo:rerun-if-env-changed=HOST_CFLAGS
+HOST_CFLAGS = None
+cargo:rerun-if-env-changed=CFLAGS_x86_64_pc_windows_msvc
+CFLAGS_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=CFLAGS_x86_64-pc-windows-msvc
+CFLAGS_x86_64-pc-windows-msvc = None
+CARGO_ENCODED_RUSTFLAGS = Some()
+cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
+rgui_wrapper.cpp
+utils_log.cpp
+cargo:rerun-if-env-changed=AR_x86_64-pc-windows-msvc
+AR_x86_64-pc-windows-msvc = None
+cargo:rerun-if-env-changed=AR_x86_64_pc_windows_msvc
+AR_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=HOST_AR
+HOST_AR = None
+cargo:rerun-if-env-changed=AR
+AR = None
+cargo:rerun-if-env-changed=ARFLAGS
+ARFLAGS = None
+cargo:rerun-if-env-changed=HOST_ARFLAGS
+HOST_ARFLAGS = None
+cargo:rerun-if-env-changed=ARFLAGS_x86_64_pc_windows_msvc
+ARFLAGS_x86_64_pc_windows_msvc = None
+cargo:rerun-if-env-changed=ARFLAGS_x86_64-pc-windows-msvc
+ARFLAGS_x86_64-pc-windows-msvc = None
+cargo:rustc-link-lib=static=rgui
+cargo:rustc-link-search=native=C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-e49c2503b293fc7c\out

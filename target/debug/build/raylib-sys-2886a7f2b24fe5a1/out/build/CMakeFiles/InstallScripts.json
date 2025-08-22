@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-2886a7f2b24fe5a1/out/build/cmake_install.cmake",
+		"C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-2886a7f2b24fe5a1/out/build/raylib/cmake_install.cmake",
+		"C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-2886a7f2b24fe5a1/out/build/raylib/external/glfw/cmake_install.cmake",
+		"C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-2886a7f2b24fe5a1/out/build/raylib/external/glfw/src/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

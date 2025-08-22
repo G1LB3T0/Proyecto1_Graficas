@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-2886a7f2b24fe5a1\out\build\CMakeFiles\022ef5f2ebc08a0ba39e4dcb44465bc6\uninstall.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\luisy\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\raylib-sys-5.5.1\raylib\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-2886a7f2b24fe5a1\out\build\CMakeFiles\uninstall" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{E0708EBD-C724-3C08-8635-D8EE0BE7DACC}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+prefix=C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out
+exec_prefix=${prefix}
+includedir=C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/include
+libdir=C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib
+
+Name: GLFW
+Description: A multi-platform library for OpenGL, window and input
+Version: 3.4.0
+URL: https://www.glfw.org/
+Requires.private: 
+Libs: -L${libdir} -lglfw3
+Libs.private:  -lgdi32
+Cflags: -I${includedir}

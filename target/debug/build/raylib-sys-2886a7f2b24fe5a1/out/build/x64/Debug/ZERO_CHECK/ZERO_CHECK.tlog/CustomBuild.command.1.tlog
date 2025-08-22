@@ -1,0 +1,10 @@
+^C:\USERS\LUISY\DESKTOP\GRAFICAS\PROYECTOPATZAN\PROYECTOPATZAN\TARGET\DEBUG\BUILD\RAYLIB-SYS-2886A7F2B24FE5A1\OUT\BUILD\CMAKEFILES\022EF5F2EBC08A0BA39E4DCB44465BC6\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/luisy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/raylib-sys-5.5.1/raylib -BC:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-2886a7f2b24fe5a1/out/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-2886a7f2b24fe5a1/out/build/raylib.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
