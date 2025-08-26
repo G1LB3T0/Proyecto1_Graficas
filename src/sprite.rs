@@ -118,11 +118,12 @@ fn next_step_bfs(maze: &Maze, from_x: f32, from_y: f32, to_x: f32, to_y: f32, bl
 pub struct NPC {
     pub pos: Vector2,
     pub speed: f32,
+    pub phase: f32, // animation phase for bob/pulse
 }
 
 impl NPC {
     pub fn new(x: f32, y: f32, speed: f32) -> Self {
-        NPC { pos: Vector2::new(x, y), speed }
+        NPC { pos: Vector2::new(x, y), speed, phase: (x + y) * 0.01 }
     }
 }
 
@@ -144,6 +145,9 @@ pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size
     // return true when any NPC touches the player
     let mut touched = false;
     for npc in npcs.iter_mut() {
+    // advance animation phase
+    npc.phase += 0.12;
+    if npc.phase > std::f32::consts::TAU { npc.phase = npc.phase % std::f32::consts::TAU; }
         let dir_x = player.pos.x - npc.pos.x;
         let dir_y = player.pos.y - npc.pos.y;
         let len = (dir_x*dir_x + dir_y*dir_y).sqrt();
@@ -218,9 +222,13 @@ pub fn render_npcs(framebuffer: &mut Framebuffer, textures: &TextureAtlas, playe
         let half_fov = player.fov / 2.0;
         if rel_ang.abs() > half_fov { continue; }
         let screen_x = ((rel_ang + half_fov) / player.fov) * num_rays;
-        let sprite_height = (hh / dist) * 70.0;
-        let top = (hh - (sprite_height/2.0)) as isize;
-        let bottom = (hh + (sprite_height/2.0)) as isize;
+    // apply small pulse and vertical bob based on npc.phase
+    let pulse = 1.0 + 0.08 * (npc.phase).sin();
+    let sprite_height = (hh / dist) * 70.0 * pulse;
+    // bob amount in screen space (pixels)
+    let bob = 6.0 * (npc.phase * 0.6).sin();
+    let top = (hh - (sprite_height/2.0) + bob) as isize;
+    let bottom = (hh + (sprite_height/2.0) + bob) as isize;
         let sx = screen_x as isize;
         let sprite_screen_w = ((sprite_height * 0.5).max(6.0)) as isize;
         let half_w = (sprite_screen_w / 2).max(1);
@@ -233,7 +241,12 @@ pub fn render_npcs(framebuffer: &mut Framebuffer, textures: &TextureAtlas, playe
                 if px >= 0 && px < num_rays as isize {
                     if let Some(col) = textures.sample_npc(u, v) {
                         if col.a > 16 {
-                            framebuffer.set_current_color(col);
+                            // optionally tint slightly based on pulse
+                            let mut tint = col;
+                            let tint_factor = (1.0 + 0.08 * (npc.phase).sin()) as f32;
+                            tint.r = ((tint.r as f32) * tint_factor).min(255.0) as u8;
+                            tint.g = ((tint.g as f32) * (0.9 + 0.06 * (npc.phase).cos())).min(255.0) as u8;
+                            framebuffer.set_current_color(tint);
                             framebuffer.set_pixel(px as u32, y as u32);
                         }
                     } else {

@@ -13,6 +13,7 @@ mod sprite;
 mod textures;
 mod menu;
 mod audio;
+mod anim;
 
 use line::line;
 use maze::{Maze,load_maze};

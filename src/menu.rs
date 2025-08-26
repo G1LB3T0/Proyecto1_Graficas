@@ -12,6 +12,7 @@ pub fn run_menu(window: &mut RaylibHandle, thread: &RaylibThread, framebuffer: &
     // Simple menu loop: draw menu image centered without stretching, overlay two options
     let mut selection: usize = 0; // 0 = Jugar, 1 = Salir
     loop {
+        
         framebuffer.clear();
 
         let fb_w = framebuffer.width as u32;
@@ -37,7 +38,7 @@ pub fn run_menu(window: &mut RaylibHandle, thread: &RaylibThread, framebuffer: &
                 }
             }
 
-            // sample menu texture only into centered rect to preserve aspect
+            // sample menu texture only into centered rect to preserve aspect (animated)
             for y in 0..th {
                 for x in 0..tw {
                     let u = x as f32 / (tw as f32 - 1.0).max(1.0);
