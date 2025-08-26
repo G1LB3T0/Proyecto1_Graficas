@@ -11,6 +11,8 @@ mod minimap;
 mod renderer;
 mod sprite;
 mod textures;
+mod menu;
+mod audio;
 
 use line::line;
 use maze::{Maze,load_maze};
@@ -19,6 +21,7 @@ use framebuffer::Framebuffer;
 use player::{Player, process_events};
 
 use raylib::prelude::*;
+use std::ffi::CString;
 use std::thread;
 use std::time::Duration;
 use std::env;
@@ -67,7 +70,26 @@ fn main() {
     // load textures atlas (optional - will fallback to procedural patterns)
     let textures = textures::TextureAtlas::new();
 
-        let maze = load_maze("maze.txt");
+
+    // audio manager: encapsulates audio init/play/stop/update
+    let mut audio = audio::AudioManager::new();
+    audio.init();
+    audio.play_menu_track();
+
+    // show main menu and handle selection
+    match menu::run_menu(&mut window, &raylib_thread, &mut framebuffer, &textures, &mut audio) {
+        menu::MenuAction::Start => {
+            // stop menu music and start gameplay music
+            audio.stop_unload();
+            audio.play_game_track();
+        }
+        menu::MenuAction::Quit => {
+            audio.cleanup();
+            return;
+        }
+    }
+
+    let maze = load_maze("maze.txt");
 
         // DEBUG: print working directory and the resolved path of maze.txt so we know which file is loaded
         if let Ok(cwd) = env::current_dir() {
@@ -89,6 +111,8 @@ fn main() {
 
     // load NPCs from maze
     let mut npcs = sprite::load_npcs_from_maze(&maze, block_size);
+    // fog-of-war discovered grid for the minimap (initialized to false)
+    let mut discovered: Vec<Vec<bool>> = maze.iter().map(|r| vec![false; r.len()]).collect();
 
     while !window.window_should_close() {
         // 1. clear framebuffer
@@ -97,8 +121,67 @@ fn main() {
     // 2. move the player on user input (with collision checks)
     process_events(&mut player, &window, &maze, block_size);
 
-        // update NPCs
-        sprite::update_npcs(&mut npcs, &player, &maze, block_size);
+        // update NPCs and check for collision (player death)
+        let player_dead = sprite::update_npcs(&mut npcs, &player, &maze, block_size);
+    if player_dead {
+            // simple Game Over screen: Enter to restart, Q to quit
+            loop {
+                framebuffer.clear();
+                // draw current framebuffer scene briefly
+                let title = "GAME OVER";
+
+                // poll keys before drawing to avoid borrow conflicts
+                if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
+                    // reset player, npcs, discovered and break to resume game
+                    player.pos = Vector2::new(150.0, 150.0);
+                    player.a = PI / 3.0;
+                    npcs = sprite::load_npcs_from_maze(&maze, block_size);
+                    discovered = maze.iter().map(|r| vec![false; r.len()]).collect();
+                    break;
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_Q) {
+                    // cleanup audio and quit
+                    audio.cleanup();
+                    return;
+                }
+
+                // draw with raylib (query sizes first)
+                let screen_w = window.get_screen_width();
+                let screen_h = window.get_screen_height();
+                    // If game over texture exists, stretch it to cover the entire framebuffer
+                    if textures.game_over.is_some() {
+                        // fill framebuffer by sampling the game_over texture stretched to fb size
+                        let fbw = framebuffer.width as u32;
+                        let fbh = framebuffer.height as u32;
+                        for y in 0..fbh {
+                            for x in 0..fbw {
+                                let u = x as f32 / fbw as f32;
+                                let v = y as f32 / fbh as f32;
+                                let col = textures.sample_gameover(u, v);
+                                framebuffer.set_current_color(col);
+                                framebuffer.set_pixel(x, y);
+                            }
+                        }
+                        // draw framebuffer to screen and overlay controls text
+                        if let Ok(texture) = window.load_texture_from_image(&raylib_thread, &framebuffer.color_buffer) {
+                            let mut d = window.begin_drawing(&raylib_thread);
+                            let src = Rectangle::new(0.0,0.0,framebuffer.width as f32, framebuffer.height as f32);
+                            let dest = Rectangle::new(0.0,0.0,screen_w as f32, screen_h as f32);
+                            d.draw_texture_pro(&texture, src, dest, Vector2::new(0.0,0.0), 0.0, Color::WHITE);
+                            d.draw_text("ENTER = REINICIAR  Q = SALIR", 24, 56, 16, Color::WHITE);
+                        }
+                    } else if let Ok(texture) = window.load_texture_from_image(&raylib_thread, &framebuffer.color_buffer) {
+                        let mut d = window.begin_drawing(&raylib_thread);
+                        let src = Rectangle::new(0.0,0.0,framebuffer.width as f32, framebuffer.height as f32);
+                        let dest = Rectangle::new(0.0,0.0,screen_w as f32, screen_h as f32);
+                        d.draw_texture_pro(&texture, src, dest, Vector2::new(0.0,0.0), 0.0, Color::WHITE);
+                        d.draw_rectangle(10, 10, 300, 80, Color::new(0,0,0,160));
+                        d.draw_text(title, 24, 20, 40, Color::RAYWHITE);
+                        d.draw_text("ENTER = REINICIAR  Q = SALIR", 24, 56, 16, Color::WHITE);
+                    }
+                thread::sleep(Duration::from_millis(16));
+            }
+        }
 
     // 3. draw stuff: always render 3D world and a stylized minimap
     // pass column_step derived from render_scale to the renderer (more aggressive when downscaling)
@@ -106,11 +189,13 @@ fn main() {
     renderer::render_world(&mut framebuffer, &maze, block_size, &player, &textures, &npcs, column_step);
     let minimap_scale = 14; // increased pixels per cell for bigger minimap
     // place minimap at 12,12 offset
-    minimap::render_minimap(&mut framebuffer, &maze, minimap_scale, &player, 12, 12, block_size, &npcs);
+    minimap::render_minimap(&mut framebuffer, &maze, minimap_scale, &player, 12, 12, block_size, &npcs, &mut discovered);
 
     // 4. swap buffers (draw framebuffer and overlay FPS)
     let fps = window.get_fps();
     framebuffer.swap_buffers(&mut window, &raylib_thread, Some(fps as i32));
+    // update music streaming buffers each frame
+    audio.update();
         // toggle mouse capture with ESC key (currently only toggles state; we avoid forcing
         // SetMousePosition each frame since that can zero mouse delta on some platforms)
         if window.is_key_pressed(KeyboardKey::KEY_ESCAPE) {

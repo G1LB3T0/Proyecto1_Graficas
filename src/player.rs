@@ -34,7 +34,8 @@ pub fn can_move_to(maze: &Maze, x: f32, y: f32, block_size: usize) -> bool {
 // Uses axis-aligned sliding: if full move collides, tries X-only and Y-only moves.
 pub fn process_events(player: &mut Player, rl: &RaylibHandle, maze: &Maze, block_size: usize) {
     // Movement: WASD -> forward/back + strafing. Mouse -> camera yaw.
-    const MOVE_SPEED: f32 = 10.0;
+    // Slightly increased movement speed so player can better evade NPCs
+    const MOVE_SPEED: f32 = 7.0;
     const MOUSE_SENSITIVITY: f32 = 0.0035;
 
     // Mouse look: apply relative mouse delta only while right mouse button is held

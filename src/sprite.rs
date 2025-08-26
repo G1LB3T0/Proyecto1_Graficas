@@ -67,12 +67,16 @@ fn next_step_bfs(maze: &Maze, from_x: f32, from_y: f32, to_x: f32, to_y: f32, bl
     let (gi,gj) = cell_indices_from_pos(to_x, to_y, block_size);
     if si == gi && sj == gj { return None; }
 
-    let rows = maze.len() as isize;
-    let cols = if rows>0 { maze[0].len() as isize } else { 0 };
+    let rows = maze.len();
 
     let mut q: VecDeque<(isize,isize)> = VecDeque::new();
-    let mut visited = vec![vec![false; cols as usize]; rows as usize];
-    let mut parent = vec![vec![(-1isize,-1isize); cols as usize]; rows as usize];
+    // allocate visited and parent with per-row lengths to support non-rectangular mazes
+    let mut visited: Vec<Vec<bool>> = Vec::with_capacity(rows);
+    let mut parent: Vec<Vec<(isize,isize)>> = Vec::with_capacity(rows);
+    for r in maze.iter() {
+        visited.push(vec![false; r.len()]);
+        parent.push(vec![(-1isize, -1isize); r.len()]);
+    }
 
     if !in_bounds(maze, si, sj) || !in_bounds(maze, gi, gj) { return None; }
     if !is_walkable_cell(maze, gi, gj) { return None; }
@@ -136,11 +140,20 @@ pub fn load_npcs_from_maze(maze: &Maze, block_size: usize) -> Vec<NPC> {
     out
 }
 
-pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size: usize) {
+pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size: usize) -> bool {
+    // return true when any NPC touches the player
+    let mut touched = false;
     for npc in npcs.iter_mut() {
         let dir_x = player.pos.x - npc.pos.x;
         let dir_y = player.pos.y - npc.pos.y;
         let len = (dir_x*dir_x + dir_y*dir_y).sqrt();
+        // collision threshold (world pixels). If npc gets very close, consider player dead.
+        let collision_dist = (block_size as f32) * 0.25; // quarter of cell
+        if len <= collision_dist {
+            touched = true;
+            // continue updating others but mark touched
+        }
+
         if len > 1.0 {
             // If direct LOS to player exists, try moving straight (with sliding)
             if line_of_sight(maze, npc.pos.x, npc.pos.y, player.pos.x, player.pos.y, block_size) {
@@ -187,6 +200,7 @@ pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size
             }
         }
     }
+    touched
 }
 
 pub fn render_npcs(framebuffer: &mut Framebuffer, textures: &TextureAtlas, player: &Player, npcs: &Vec<NPC>) {
