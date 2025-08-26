@@ -33,49 +33,42 @@ pub fn can_move_to(maze: &Maze, x: f32, y: f32, block_size: usize) -> bool {
 // Process input and perform movement with simple collision against maze walls.
 // Uses axis-aligned sliding: if full move collides, tries X-only and Y-only moves.
 pub fn process_events(player: &mut Player, rl: &RaylibHandle, maze: &Maze, block_size: usize) {
+    // Movement: WASD -> forward/back + strafing. Mouse -> camera yaw.
     const MOVE_SPEED: f32 = 10.0;
-    // Slightly faster rotation (~2 degrees per frame)
-    const ROTATION_SPEED: f32 = PI / 90.0;
-    const MOUSE_SENSITIVITY: f32 = 0.004;
+    const MOUSE_SENSITIVITY: f32 = 0.0035;
 
-    // Use WASD: W forward, S backward, A rotate left, D rotate right
-    if rl.is_key_down(KeyboardKey::KEY_A) {
-        player.a += ROTATION_SPEED;
-    }
-    if rl.is_key_down(KeyboardKey::KEY_D) {
-        player.a -= ROTATION_SPEED;
-    }
-
-    // Right-click + mouse movement rotates the player horizontally
-    let md = rl.get_mouse_delta();
+    // Mouse look: apply relative mouse delta only while right mouse button is held
     if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_RIGHT) {
-        // move mouse right -> rotate right (decrease angle)
+        let md = rl.get_mouse_delta();
         player.a -= md.x as f32 * MOUSE_SENSITIVITY;
     }
 
-    let mut dx = 0.0_f32;
-    let mut dy = 0.0_f32;
+    // WASD: W forward, S backward, A left strafe, D right strafe
+    let mut forward: f32 = 0.0;
+    let mut strafe: f32 = 0.0;
+    if rl.is_key_down(KeyboardKey::KEY_W) { forward += 1.0; }
+    if rl.is_key_down(KeyboardKey::KEY_S) { forward -= 1.0; }
+    if rl.is_key_down(KeyboardKey::KEY_D) { strafe += 1.0; }
+    if rl.is_key_down(KeyboardKey::KEY_A) { strafe -= 1.0; }
 
-    if rl.is_key_down(KeyboardKey::KEY_S) {
-        dx -= MOVE_SPEED * player.a.cos();
-        dy -= MOVE_SPEED * player.a.sin();
-    }
-    if rl.is_key_down(KeyboardKey::KEY_W) {
-        dx += MOVE_SPEED * player.a.cos();
-        dy += MOVE_SPEED * player.a.sin();
-    }
+    if forward != 0.0 || strafe != 0.0 {
+        // movement vector in world coordinates
+        let fx = player.a.cos();
+        let fy = player.a.sin();
+        let sx = (player.a + PI / 2.0).cos();
+        let sy = (player.a + PI / 2.0).sin();
 
-    // Apply movement only if requested (rotation via mouse still works)
-    if !(dx == 0.0 && dy == 0.0) {
+        let dx = (forward * fx + strafe * sx) * MOVE_SPEED;
+        let dy = (forward * fy + strafe * sy) * MOVE_SPEED;
+
         let new_x = player.pos.x + dx;
         let new_y = player.pos.y + dy;
 
-        // If full move is allowed, do it
+        // collision with sliding: try full move, then X-only and Y-only
         if can_move_to(maze, new_x, new_y, block_size) {
             player.pos.x = new_x;
             player.pos.y = new_y;
         } else {
-            // Otherwise try sliding on X then Y
             if can_move_to(maze, new_x, player.pos.y, block_size) {
                 player.pos.x = new_x;
             }

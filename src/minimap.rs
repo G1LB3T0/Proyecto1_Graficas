@@ -1,16 +1,15 @@
-// minimap.rs
-
 use crate::framebuffer::Framebuffer;
 use crate::maze::Maze;
 use crate::player::Player;
 use crate::sprite::NPC;
-use crate::line::line;
-use raylib::prelude::*;
-use std::f32::consts::PI;
+use raylib::prelude::Color;
 
-// Square, smaller and clearer minimap.
+// Render a simple top-left minimap into the framebuffer.
+// - `scale` is pixels per maze cell in the minimap.
+// - `xo`, `yo` are pixel offsets inside the framebuffer where the minimap origin is drawn.
+// - `block_size` is the world pixels per maze cell (used to convert world coords -> maze cells).
 pub fn render_minimap(
-    framebuffer: &mut Framebuffer,
+    fb: &mut Framebuffer,
     maze: &Maze,
     scale: usize,
     player: &Player,
@@ -19,209 +18,98 @@ pub fn render_minimap(
     block_size: usize,
     npcs: &Vec<NPC>,
 ) {
-    let cols = if maze.is_empty() { 1 } else { maze[0].len() };
+    if maze.is_empty() { return; }
+
+    // helper to clip and draw a filled rect in framebuffer
+    let draw_filled_rect = |fb: &mut Framebuffer, x: isize, y: isize, w: usize, h: usize, col: Color| {
+        fb.set_current_color(col);
+        for iy in 0..h {
+            let py = y + iy as isize;
+            if py < 0 { continue; }
+            for ix in 0..w {
+                let px = x + ix as isize;
+                if px < 0 { continue; }
+                // clip to framebuffer bounds
+                if (px as u32) >= fb.width || (py as u32) >= fb.height { continue; }
+                fb.set_pixel(px as u32, py as u32);
+            }
+        }
+    };
+
     let rows = maze.len();
-    let max_cells = cols.max(rows).max(1);
+    let cols = maze[0].len();
 
-    // side length: keep it smaller than previous versions
-    let padding = 24;
-    let side = (max_cells * scale) as i32 + padding; // square minimap side
-    let ox = xo as i32;
-    let oy = yo as i32;
+    // background for minimap (semi-transparent dark)
+    draw_filled_rect(fb, xo as isize - 4, yo as isize - 4, cols * scale + 8, rows * scale + 8, Color::new(0,0,0,160));
 
-    // background rectangle (semi-transparent)
-    framebuffer.set_current_color(Color::new(12, 18, 28, 220));
-    for x in ox..(ox + side) {
-        for y in oy..(oy + side) {
-            if x >= 0 && y >= 0 {
-                framebuffer.set_pixel(x as u32, y as u32);
-            }
-        }
-    }
-
-    // compute effective cell size to fit square nicely
-    let effective_scale = ((side - padding) as f32) / (max_cells as f32);
-    let origin_x = ox as f32 + (padding as f32 / 2.0);
-    let origin_y = oy as f32 + (padding as f32 / 2.0);
-
-    // draw cells with clear contrast: corridors light, walls dark
-    for (r, row) in maze.iter().enumerate() {
-        for (c, &cell) in row.iter().enumerate() {
-            let sx = origin_x + (c as f32) * effective_scale;
-            let sy = origin_y + (r as f32) * effective_scale;
-            let ix = sx as i32;
-            let iy = sy as i32;
-
-            // choose color: corridors (space) lighter, walls darker
-            let color = match cell {
-                '+' | '-' | '|' => Color::new(40, 40, 50, 255), // wall
+    // draw cells
+    for (ry, row) in maze.iter().enumerate() {
+        for (rx, &cell) in row.iter().enumerate() {
+            let x = xo as isize + (rx * scale) as isize;
+            let y = yo as isize + (ry * scale) as isize;
+            let col = match cell {
+                ' ' => Color::new(200,200,200,220), // floor
+                '+' | '|' | '-' => Color::new(40,40,40,255), // walls
                 'g' => Color::GREEN,
-                // treat R as corridor base so the red glyph stands out
-                'R' => Color::new(230, 230, 230, 255),
-                _ => Color::new(230, 230, 230, 255), // corridor/floor
+                'R' => Color::new(180,100,100,255),
+                _ => Color::new(140,140,140,220),
             };
-
-            framebuffer.set_current_color(color);
-            // draw a tight square for the cell with a 1px gap so corridors read clearly
-            let cell_px = (effective_scale * 0.9).max(1.0) as i32; // shrink a bit for gutter
-            let half = cell_px / 2;
-            let center_x = ix + (effective_scale as i32) / 2;
-            let center_y = iy + (effective_scale as i32) / 2;
-            for oxi in -half..=half {
-                for oyi in -half..=half {
-                    let px = center_x + oxi;
-                    let py = center_y + oyi;
-                    if px >= 0 && py >= 0 {
-                        framebuffer.set_pixel(px as u32, py as u32);
+            draw_filled_rect(fb, x, y, scale, scale, col);
+            // draw cell border to improve readability
+            fb.set_current_color(Color::BLACK);
+            // top and left borders (cheap)
+            for i in 0..scale {
+                if x as isize >= 0 {
+                    if y as isize >= 0 && x as isize >= 0 && (x as u32) < fb.width && (y as u32 + i as u32) < fb.height {
+                        fb.set_pixel(x as u32, y as u32 + i as u32);
                     }
                 }
-            }
-
-            // if this cell contains an 'R', draw a small red 'R' glyph centered in the cell
-            if cell == 'R' {
-                // 3x5 stylized R bitmap (1 = pixel)
-                let glyph: [[u8; 3]; 5] = [
-                    [1,1,1],
-                    [1,0,1],
-                    [1,1,1],
-                    [1,0,1],
-                    [1,0,1],
-                ];
-                let glyph_w = 3;
-                let glyph_h = 5;
-                let scale_g = (effective_scale * 0.18).max(1.0) as i32; // scale to cell
-                let gx0 = center_x - ((glyph_w*scale_g)/2);
-                let gy0 = center_y - ((glyph_h*scale_g)/2);
-                framebuffer.set_current_color(Color::new(200, 30, 30, 255));
-                for gy in 0..glyph_h {
-                    for gx in 0..glyph_w {
-                        if glyph[gy as usize][gx as usize] == 1 {
-                            // draw scaled block
-                            for sxg in 0..scale_g {
-                                for syg in 0..scale_g {
-                                    let px = gx0 + gx*scale_g + sxg;
-                                    let py = gy0 + gy*scale_g + syg;
-                                    if px >= 0 && py >= 0 {
-                                        framebuffer.set_pixel(px as u32, py as u32);
-                                    }
-                                }
-                            }
-                        }
+                if y as isize >= 0 {
+                    if x as isize >= 0 && (x as u32 + i as u32) < fb.width && (y as u32) < fb.height {
+                        fb.set_pixel(x as u32 + i as u32, y as u32);
                     }
                 }
             }
         }
     }
 
-    // draw grid lines (subtle) to make corridors and cells clearer
-    framebuffer.set_current_color(Color::new(20, 20, 28, 160));
-    for i in 0..=max_cells {
-        let x = origin_x as i32 + (i as f32 * effective_scale) as i32;
-        for y in oy..(oy + side) {
-            if x >= 0 && y >= 0 {
-                framebuffer.set_pixel(x as u32, y as u32);
-            }
-        }
-        let y = origin_y as i32 + (i as f32 * effective_scale) as i32;
-        for x in ox..(ox + side) {
-            if x >= 0 && y >= 0 {
-                framebuffer.set_pixel(x as u32, y as u32);
-            }
-        }
-    }
-
-    // border
-    framebuffer.set_current_color(Color::new(255, 255, 255, 90));
-    for x in ox..(ox + side) {
-        framebuffer.set_pixel(x as u32, oy as u32);
-        framebuffer.set_pixel(x as u32, (oy + side - 1) as u32);
-    }
-    for y in oy..(oy + side) {
-        framebuffer.set_pixel(ox as u32, y as u32);
-        framebuffer.set_pixel((ox + side - 1) as u32, y as u32);
-    }
-
-    // draw player as filled circle + short direction line (bigger and clearer)
-    let player_cell_x = player.pos.x / block_size as f32;
-    let player_cell_y = player.pos.y / block_size as f32;
-    let px_f = origin_x + player_cell_x * effective_scale + (effective_scale * 0.5);
-    let py_f = origin_y + player_cell_y * effective_scale + (effective_scale * 0.5);
-    let px_i = px_f as i32;
-    let py_i = py_f as i32;
-
-    // direction line
-    framebuffer.set_current_color(Color::YELLOW);
-    let dir_len = (effective_scale * 1.5).max(6.0);
-    let ex = px_f + player.a.cos() * dir_len;
-    let ey = py_f + player.a.sin() * dir_len;
-    let steps = (dir_len * 1.2) as i32;
-    for t in 0..=steps {
-        let frac = t as f32 / steps as f32;
-        let lx = px_f + (ex - px_f) * frac;
-        let ly = py_f + (ey - py_f) * frac;
-        let ix = lx as i32;
-        let iy = ly as i32;
-        if ix >= 0 && iy >= 0 {
-            framebuffer.set_pixel(ix as u32, iy as u32);
-        }
-    }
-
-    // filled player circle
-    framebuffer.set_current_color(Color::ORANGE);
-    let r_player = ((effective_scale * 0.4).max(2.0)) as i32;
-    for dx in -r_player..=r_player {
-        for dy in -r_player..=r_player {
-            if dx*dx + dy*dy <= r_player*r_player {
-                let x = px_i + dx;
-                let y = py_i + dy;
-                if x >= 0 && y >= 0 {
-                    framebuffer.set_pixel(x as u32, y as u32);
-                }
-            }
-        }
-    }
-
-    // draw NPCs dynamic positions (small red dots)
-    framebuffer.set_current_color(Color::RED);
+    // draw NPCs as small red squares
     for npc in npcs.iter() {
-        let nx = npc.pos.x / block_size as f32;
-        let ny = npc.pos.y / block_size as f32;
-        let nxf = origin_x + nx * effective_scale + (effective_scale * 0.5);
-        let nyf = origin_y + ny * effective_scale + (effective_scale * 0.5);
-        let nxi = nxf as i32;
-        let nyi = nyf as i32;
-        // small square
-        for oxi in -1..=1 {
-            for oyi in -1..=1 {
-                let px = nxi + oxi;
-                let py = nyi + oyi;
-                if px >= 0 && py >= 0 {
-                    framebuffer.set_pixel(px as u32, py as u32);
-                }
-            }
-        }
+        let mx = (npc.pos.x / block_size as f32) * scale as f32 + xo as f32;
+        let my = (npc.pos.y / block_size as f32) * scale as f32 + yo as f32;
+        let cx = mx.round() as isize;
+        let cy = my.round() as isize;
+        draw_filled_rect(fb, cx - 1, cy - 1, 3, 3, Color::RED);
     }
 
-    // faint FOV rays (subtle)
-    framebuffer.set_current_color(Color::new(255, 210, 120, 120));
-    let fov_rays = 8;
-    for i in 0..fov_rays {
-        let t = if fov_rays > 1 { i as f32 / (fov_rays - 1) as f32 } else { 0.5 };
-        let a = player.a - (player.fov / 2.0) + player.fov * t;
-        let mut d = 0.0_f32;
-        while d < (side as f32) {
-            let wx = player.pos.x + a.cos() * d;
-            let wy = player.pos.y + a.sin() * d;
-            let sx = origin_x + wx / block_size as f32 * effective_scale + (effective_scale * 0.5);
-            let sy = origin_y + wy / block_size as f32 * effective_scale + (effective_scale * 0.5);
-            let ix = sx as i32;
-            let iy = sy as i32;
-            if ix >= ox && ix < ox + side && iy >= oy && iy < oy + side {
-                framebuffer.set_pixel(ix as u32, iy as u32);
-            } else {
-                break;
-            }
-            d += 6.0;
+    // draw player as blue dot and a directional line
+    let px_f = (player.pos.x / block_size as f32) * scale as f32 + xo as f32;
+    let py_f = (player.pos.y / block_size as f32) * scale as f32 + yo as f32;
+    let px = px_f.round() as isize;
+    let py = py_f.round() as isize;
+    draw_filled_rect(fb, px - 1, py - 1, 3, 3, Color::SKYBLUE);
+
+    // draw orientation line (length ~ 2 cells)
+    let len = (scale as f32) * 2.0;
+    let ex = px_f + player.a.cos() * len;
+    let ey = py_f + player.a.sin() * len;
+
+    // simple Bresenham-like line (floating approximation)
+    let dx = ex - px_f;
+    let dy = ey - py_f;
+    let steps = dx.abs().max(dy.abs()).ceil() as i32;
+    fb.set_current_color(Color::YELLOW);
+    if steps > 0 {
+        for i in 0..=steps {
+            let t = i as f32 / steps as f32;
+            let lx = px_f + dx * t;
+            let ly = py_f + dy * t;
+            if lx < 0.0 || ly < 0.0 { continue; }
+            let lxi = lx.round() as isize;
+            let lyi = ly.round() as isize;
+            if lxi < 0 || lyi < 0 { continue; }
+            if (lxi as u32) >= fb.width || (lyi as u32) >= fb.height { continue; }
+            fb.set_pixel(lxi as u32, lyi as u32);
         }
     }
 }

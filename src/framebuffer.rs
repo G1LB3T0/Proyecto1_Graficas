@@ -52,8 +52,35 @@ impl Framebuffer {
         fps: Option<i32>,
     ) {
         if let Ok(texture) = window.load_texture_from_image(raylib_thread, &self.color_buffer) {
+            // Preserve aspect ratio: compute destination rect that fits the window without stretching
+            let screen_w = window.get_screen_width();
+            let screen_h = window.get_screen_height();
+
             let mut renderer = window.begin_drawing(raylib_thread);
-            renderer.draw_texture(&texture, 0, 0, Color::WHITE);
+            let fb_w = self.width as f32;
+            let fb_h = self.height as f32;
+            let screen_aspect = screen_w as f32 / screen_h as f32;
+            let fb_aspect = fb_w / fb_h;
+
+            let (dest_w, dest_h) = if fb_aspect > screen_aspect {
+                // framebuffer is wider relative to screen -> fit by width
+                (screen_w as f32, screen_w as f32 / fb_aspect)
+            } else {
+                // fit by height
+                (screen_h as f32 * fb_aspect, screen_h as f32)
+            };
+
+            let dest_x = ((screen_w as f32 - dest_w) / 2.0) as i32;
+            let dest_y = ((screen_h as f32 - dest_h) / 2.0) as i32;
+
+            // source rectangle covers whole texture
+            let src = Rectangle::new(0.0, 0.0, fb_w, fb_h);
+            // dest rectangle where to draw the texture
+            let dest = Rectangle::new(dest_x as f32, dest_y as f32, dest_w, dest_h);
+            // origin for rotation/scaling
+            let origin = Vector2::new(0.0, 0.0);
+
+            renderer.draw_texture_pro(&texture, src, dest, origin, 0.0, Color::WHITE);
             if let Some(f) = fps {
                 let txt = format!("FPS: {}", f);
                 // draw semi-transparent background for readability

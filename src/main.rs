@@ -27,8 +27,27 @@ use std::f32::consts::PI;
  
 
 fn main() {
-    let window_width = 1300;
-    let window_height = 900;
+    // Allow overriding resolution via command-line: cargo run -- <width> <height>
+    let args: Vec<String> = env::args().collect();
+    let mut window_width: i32 = 1300;
+    let mut window_height: i32 = 900;
+    if args.len() >= 3 {
+        match (args[1].parse::<i32>(), args[2].parse::<i32>()) {
+            (Ok(w), Ok(h)) => {
+                if w > 200 && h > 200 {
+                    window_width = w;
+                    window_height = h;
+                } else {
+                    eprintln!("[warn] provided resolution too small, using default {}x{}", window_width, window_height);
+                }
+            }
+            _ => {
+                eprintln!("[warn] invalid resolution arguments, expected two integers, using default {}x{}", window_width, window_height);
+            }
+        }
+    } else {
+        eprintln!("[info] run with \"<program> <width> <height>\" to override resolution. Using default {}x{}", window_width, window_height);
+    }
     let block_size = 100;
 
     let (mut window, raylib_thread) = raylib::init()
@@ -37,7 +56,12 @@ fn main() {
         .log_level(TraceLogLevel::LOG_WARNING)
         .build();
 
-    let mut framebuffer = Framebuffer::new(window_width as u32, window_height as u32);
+    // render_scale reduces the internal framebuffer resolution to improve FPS.
+    // e.g. render_scale = 2 renders to (width/2 x height/2) and scales up when drawing.
+    let render_scale: u32 = 2; // increase to 3/4 for better perf, set to 1 for native resolution
+    let fb_w = (window_width as u32).saturating_div(render_scale);
+    let fb_h = (window_height as u32).saturating_div(render_scale);
+    let mut framebuffer = Framebuffer::new(fb_w, fb_h);
     framebuffer.set_background_color(Color::new(50, 50, 100, 255));
 
     // load textures atlas (optional - will fallback to procedural patterns)
@@ -60,6 +84,9 @@ fn main() {
         fov: PI / 3.0,
     };
 
+    // start with mouse capture disabled; user can toggle with ESC
+    let mut capture_mouse = false;
+
     // load NPCs from maze
     let mut npcs = sprite::load_npcs_from_maze(&maze, block_size);
 
@@ -67,14 +94,16 @@ fn main() {
         // 1. clear framebuffer
         framebuffer.clear();
 
-        // 2. move the player on user input (with collision checks)
-        process_events(&mut player, &window, &maze, block_size);
+    // 2. move the player on user input (with collision checks)
+    process_events(&mut player, &window, &maze, block_size);
 
         // update NPCs
         sprite::update_npcs(&mut npcs, &player, &maze, block_size);
 
     // 3. draw stuff: always render 3D world and a stylized minimap
-    renderer::render_world(&mut framebuffer, &maze, block_size, &player, &textures, &npcs);
+    // pass column_step derived from render_scale to the renderer (more aggressive when downscaling)
+    let column_step = render_scale as usize; 
+    renderer::render_world(&mut framebuffer, &maze, block_size, &player, &textures, &npcs, column_step);
     let minimap_scale = 14; // increased pixels per cell for bigger minimap
     // place minimap at 12,12 offset
     minimap::render_minimap(&mut framebuffer, &maze, minimap_scale, &player, 12, 12, block_size, &npcs);
@@ -82,6 +111,19 @@ fn main() {
     // 4. swap buffers (draw framebuffer and overlay FPS)
     let fps = window.get_fps();
     framebuffer.swap_buffers(&mut window, &raylib_thread, Some(fps as i32));
+        // toggle mouse capture with ESC key (currently only toggles state; we avoid forcing
+        // SetMousePosition each frame since that can zero mouse delta on some platforms)
+        if window.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+            capture_mouse = !capture_mouse;
+            if capture_mouse {
+                // hide cursor when capture is enabled
+                window.hide_cursor();
+            } else {
+                window.show_cursor();
+            }
+        }
+
+        
 
         thread::sleep(Duration::from_millis(16));
     }

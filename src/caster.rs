@@ -11,6 +11,7 @@ pub struct Intersect {
   pub impact: char,
   pub hit_x: f32,
   pub hit_y: f32,
+  pub side: u8, // 0 = vertical (x-side), 1 = horizontal (y-side)
 }
 
 pub fn cast_ray(
@@ -100,9 +101,9 @@ pub fn cast_ray(
     let hit_y = player.pos.y + distance * ray_dir_y;
 
     let impact = maze[map_y as usize][map_x as usize];
-    return Intersect { distance, impact, hit_x, hit_y };
+  return Intersect { distance, impact, hit_x, hit_y, side: side as u8 };
   }
 
   // fallback: return large distance
-  Intersect { distance: 2000.0, impact: ' ', hit_x: player.pos.x, hit_y: player.pos.y }
+  Intersect { distance: 2000.0, impact: ' ', hit_x: player.pos.x, hit_y: player.pos.y, side: 0 }
 }

@@ -4,7 +4,7 @@ use raylib::prelude::*;
 use std::path::Path;
 use image::GenericImageView;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum TextureKind {
     Wall,
     Pillar,
@@ -171,6 +171,7 @@ impl TextureAtlas {
     // Sample color from the chosen texture image by normalized u,v in [0,1]
     // If the image isn't loaded, return a procedural fallback color pattern.
     pub fn sample(&self, kind: TextureKind, u: f32, v: f32) -> Color {
+        // keep fractional repeat behavior, but sample with bilinear filtering
         let u = u.fract().abs();
         let v = v.fract().abs();
 
@@ -179,19 +180,69 @@ impl TextureAtlas {
             TextureKind::Pillar => &self.pillar,
         };
 
+        if img_opt.is_none() {
+            eprintln!("[textures::sample] warning: requested texture {:?} not loaded", kind);
+        }
+
         if let Some(img) = img_opt {
             if img.data.len() >= 4 {
-                let x = ((u * img.w as f32).clamp(0.0, (img.w - 1) as f32)) as u32;
-                let y = ((v * img.h as f32).clamp(0.0, (img.h - 1) as f32)) as u32;
-                let idx = ((y * img.w + x) * 4) as usize;
-                if idx + 3 < img.data.len() {
-                    let r = img.data[idx];
-                    let g = img.data[idx + 1];
-                    let b = img.data[idx + 2];
-                    let mut a = img.data[idx + 3];
-                        // if image has fully transparent pixels, treat them as opaque so they render
-                        if a == 0 { a = 255; }
-                        return Color::new(r as u8, g as u8, b as u8, a as u8);
+                // bilinear filtering: compute floating sample coordinates in [0, w-1], [0, h-1]
+                let fw = (img.w - 1) as f32;
+                let fh = (img.h - 1) as f32;
+                let xf = (u * fw).clamp(0.0, fw);
+                let yf = (v * fh).clamp(0.0, fh);
+                let x0 = xf.floor() as u32;
+                let y0 = yf.floor() as u32;
+                let x1 = (x0 + 1).min(img.w - 1);
+                let y1 = (y0 + 1).min(img.h - 1);
+                let sx = xf - x0 as f32;
+                let sy = yf - y0 as f32;
+
+                let sample_pixel = |xx: u32, yy: u32| -> (f32,f32,f32,f32) {
+                    let idx = ((yy * img.w + xx) * 4) as usize;
+                    if idx + 3 < img.data.len() {
+                        let r = img.data[idx] as f32 / 255.0;
+                        let g = img.data[idx + 1] as f32 / 255.0;
+                        let b = img.data[idx + 2] as f32 / 255.0;
+                        let a = img.data[idx + 3] as f32 / 255.0;
+                        let a = if a == 0.0 { 1.0 } else { a };
+                        return (r, g, b, a);
+                    }
+                    (0.0, 0.0, 0.0, 1.0)
+                };
+
+                let (r00,g00,b00,a00) = sample_pixel(x0,y0);
+                let (r10,g10,b10,a10) = sample_pixel(x1,y0);
+                let (r01,g01,b01,a01) = sample_pixel(x0,y1);
+                let (r11,g11,b11,a11) = sample_pixel(x1,y1);
+
+                // lerp horizontally then vertically
+                let lerp = |a: f32, b: f32, t: f32| a + (b - a) * t;
+
+                let r0 = lerp(r00, r10, sx);
+                let g0 = lerp(g00, g10, sx);
+                let b0 = lerp(b00, b10, sx);
+                let a0 = lerp(a00, a10, sx);
+
+                let r1 = lerp(r01, r11, sx);
+                let g1 = lerp(g01, g11, sx);
+                let b1 = lerp(b01, b11, sx);
+                let a1 = lerp(a01, a11, sx);
+
+                let r = lerp(r0, r1, sy);
+                let g = lerp(g0, g1, sy);
+                let b = lerp(b0, b1, sy);
+                let a = lerp(a0, a1, sy);
+
+                let out_r = (r*255.0) as u8;
+                let out_g = (g*255.0) as u8;
+                let out_b = (b*255.0) as u8;
+                let out_a = (a*255.0) as u8;
+                // If the sampled color is pure black, treat it as missing and fall back
+                if out_r == 0 && out_g == 0 && out_b == 0 {
+                    // fall through to procedural fallback below
+                } else {
+                    return Color::new(out_r, out_g, out_b, out_a);
                 }
             }
         }
