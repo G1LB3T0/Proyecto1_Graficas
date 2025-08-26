@@ -75,9 +75,9 @@ pub fn cast_ray(
 
     if map_y < 0 || map_x < 0 { break; }
     if (map_y as usize) < maze.len() && (map_x as usize) < maze[map_y as usize].len() {
-      // treat 'R' as sprite (non-blocking) so rays pass through
+      // treat 'R' and 'C' as non-blocking so rays pass through
       let cell = maze[map_y as usize][map_x as usize];
-      if cell != ' ' && cell != 'R' {
+      if cell != ' ' && cell != 'R' && cell != 'C' {
         hit = true;
         break;
       }

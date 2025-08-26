@@ -24,6 +24,7 @@ pub struct TextureAtlas {
     pub floor: Option<ImageBuf>,
     pub menu: Option<ImageBuf>,
     pub game_over: Option<ImageBuf>,
+    pub coin: Option<ImageBuf>,
 }
 
 impl TextureAtlas {
@@ -217,7 +218,30 @@ impl TextureAtlas {
             }
         }
 
-    TextureAtlas { wall, pillar, npc, sky, floor, menu, game_over }
+        // try coin spritesheet
+        let coin_candidates = [
+            "./textures/coin_spin_64x64_12f.png",
+            "textures/coin_spin_64x64_12f.png",
+            "../textures/coin_spin_64x64_12f.png",
+        ];
+        let mut coin: Option<ImageBuf> = None;
+        for p in coin_candidates.iter() {
+            let path = Path::new(p);
+            if path.exists() {
+                eprintln!("[textures] found coin spritesheet at {}", path.display());
+                match image::open(path) {
+                    Ok(img) => {
+                        let img = img.to_rgba8();
+                        let (w, h) = img.dimensions();
+                        coin = Some(ImageBuf { w, h, data: img.into_raw() });
+                        break;
+                    }
+                    Err(e) => eprintln!("[textures] failed to load {}: {:?}", path.display(), e),
+                }
+            }
+        }
+
+    TextureAtlas { wall, pillar, npc, sky, floor, menu, game_over, coin }
     }
 
     // Sample color from the chosen texture image by normalized u,v in [0,1]
@@ -439,5 +463,42 @@ impl TextureAtlas {
         let g = (top.g as f32 * (1.0 - mix) + bottom.g as f32 * mix) as u8;
         let b = (top.b as f32 * (1.0 - mix) + bottom.b as f32 * mix) as u8;
         Color::new(r, g, b, 255)
+    }
+
+    // Sample coin spritesheet with animation
+    // The spritesheet has 12 frames arranged horizontally (64x64 each)
+    pub fn sample_coin(&self, u: f32, v: f32, animation_time: f32) -> Option<Color> {
+        let u = u.fract().abs();
+        let v = v.fract().abs();
+        
+        if let Some(img) = &self.coin {
+            if img.data.len() >= 4 {
+                // Calculate which frame to use (12 frames total)
+                let num_frames = 12;
+                let frame_time = (2.0 * std::f32::consts::PI) / num_frames as f32;
+                let current_frame = ((animation_time / frame_time) as usize) % num_frames;
+                
+                // Each frame is 64 pixels wide, so the total width should be 64*12 = 768
+                let frame_width = img.w / num_frames as u32;
+                let frame_height = img.h;
+                
+                // Calculate the x offset for the current frame
+                let frame_x_offset = current_frame as u32 * frame_width;
+                
+                // Sample within the current frame
+                let x = ((u * frame_width as f32).clamp(0.0, (frame_width - 1) as f32)) as u32 + frame_x_offset;
+                let y = ((v * frame_height as f32).clamp(0.0, (frame_height - 1) as f32)) as u32;
+                
+                let idx = ((y * img.w + x) * 4) as usize;
+                if idx + 3 < img.data.len() {
+                    let r = img.data[idx];
+                    let g = img.data[idx + 1];
+                    let b = img.data[idx + 2];
+                    let a = img.data[idx + 3];
+                    return Some(Color::new(r as u8, g as u8, b as u8, a as u8));
+                }
+            }
+        }
+        None
     }
 }

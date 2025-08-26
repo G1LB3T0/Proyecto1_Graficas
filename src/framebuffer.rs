@@ -89,4 +89,57 @@ impl Framebuffer {
             }
         }
     }
+
+    // Draw framebuffer and overlay with coin counter
+    pub fn swap_buffers_with_coins(
+        &self,
+        window: &mut RaylibHandle,
+        raylib_thread: &RaylibThread,
+        fps: Option<i32>,
+        coins_collected: usize,
+        total_coins: usize,
+    ) {
+        if let Ok(texture) = window.load_texture_from_image(raylib_thread, &self.color_buffer) {
+            // Preserve aspect ratio: compute destination rect that fits the window without stretching
+            let screen_w = window.get_screen_width();
+            let screen_h = window.get_screen_height();
+            let mut renderer = window.begin_drawing(raylib_thread);
+            let fb_w = self.width as f32;
+            let fb_h = self.height as f32;
+            let screen_aspect = screen_w as f32 / screen_h as f32;
+            let fb_aspect = fb_w / fb_h;
+
+            let (dest_w, dest_h) = if fb_aspect > screen_aspect {
+                // framebuffer is wider relative to screen -> fit by width
+                (screen_w as f32, screen_w as f32 / fb_aspect)
+            } else {
+                // fit by height
+                (screen_h as f32 * fb_aspect, screen_h as f32)
+            };
+
+            let dest_x = ((screen_w as f32 - dest_w) / 2.0) as i32;
+            let dest_y = ((screen_h as f32 - dest_h) / 2.0) as i32;
+
+            // source rectangle covers whole texture
+            let src = Rectangle::new(0.0, 0.0, fb_w, fb_h);
+            // dest rectangle where to draw the texture
+            let dest = Rectangle::new(dest_x as f32, dest_y as f32, dest_w, dest_h);
+            // origin for rotation/scaling
+            let origin = Vector2::new(0.0, 0.0);
+
+            renderer.draw_texture_pro(&texture, src, dest, origin, 0.0, Color::WHITE);
+            
+            if let Some(f) = fps {
+                let txt = format!("FPS: {}", f);
+                // draw semi-transparent background for readability
+                renderer.draw_rectangle(10, 10, 90, 26, Color::new(0, 0, 0, 120));
+                renderer.draw_text(&txt, 16, 14, 20, Color::RAYWHITE);
+            }
+            
+            // Draw coin counter
+            let coins_text = format!("Monedas: {}/{}", coins_collected, total_coins);
+            renderer.draw_rectangle(screen_w - 210, 10, 200, 30, Color::new(0, 0, 0, 120));
+            renderer.draw_text(&coins_text, screen_w - 200, 20, 24, Color::GOLD);
+        }
+    }
 }

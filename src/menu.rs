@@ -12,6 +12,10 @@ pub fn run_menu(window: &mut RaylibHandle, thread: &RaylibThread, framebuffer: &
     // Simple menu loop: draw menu image centered without stretching, overlay two options
     let mut selection: usize = 0; // 0 = Jugar, 1 = Salir
     loop {
+        // Check if window should close
+        if window.window_should_close() {
+            return MenuAction::Quit;
+        }
         
         framebuffer.clear();
 

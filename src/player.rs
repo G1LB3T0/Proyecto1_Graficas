@@ -26,8 +26,8 @@ pub fn can_move_to(maze: &Maze, x: f32, y: f32, block_size: usize) -> bool {
     if maze[j].is_empty() || i >= maze[j].len() {
         return false;
     }
-    // treat 'R' (sprite NPC) as non-blocking so player can walk around it
-    maze[j][i] == ' ' || maze[j][i] == 'R'
+    // treat 'R' (sprite NPC) and 'C' (coins) as non-blocking so player can walk around/over them
+    maze[j][i] == ' ' || maze[j][i] == 'R' || maze[j][i] == 'C'
 }
 
 // Process input and perform movement with simple collision against maze walls.

@@ -112,6 +112,9 @@ fn main() {
 
     // load NPCs from maze
     let mut npcs = sprite::load_npcs_from_maze(&maze, block_size);
+    // load coins from maze
+    let mut coins = sprite::load_coins_from_maze(&maze, block_size);
+    let mut total_coins_collected = 0;
     // fog-of-war discovered grid for the minimap (initialized to false)
     let mut discovered: Vec<Vec<bool>> = maze.iter().map(|r| vec![false; r.len()]).collect();
 
@@ -124,6 +127,13 @@ fn main() {
 
         // update NPCs and check for collision (player death)
         let player_dead = sprite::update_npcs(&mut npcs, &player, &maze, block_size);
+        
+        // update coins and check for collection
+        let coins_collected_this_frame = sprite::update_coins(&mut coins, &player, block_size);
+        total_coins_collected += coins_collected_this_frame;
+        if coins_collected_this_frame > 0 {
+            eprintln!("[debug] collected {} coins! Total: {}/{}", coins_collected_this_frame, total_coins_collected, coins.len());
+        }
     if player_dead {
             // simple Game Over screen: Enter to restart, Q to quit
             loop {
@@ -133,10 +143,12 @@ fn main() {
 
                 // poll keys before drawing to avoid borrow conflicts
                 if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
-                    // reset player, npcs, discovered and break to resume game
+                    // reset player, npcs, coins, discovered and break to resume game
                     player.pos = Vector2::new(150.0, 150.0);
                     player.a = PI / 3.0;
                     npcs = sprite::load_npcs_from_maze(&maze, block_size);
+                    coins = sprite::load_coins_from_maze(&maze, block_size);
+                    total_coins_collected = 0;
                     discovered = maze.iter().map(|r| vec![false; r.len()]).collect();
                     break;
                 }
@@ -187,14 +199,15 @@ fn main() {
     // 3. draw stuff: always render 3D world and a stylized minimap
     // pass column_step derived from render_scale to the renderer (more aggressive when downscaling)
     let column_step = render_scale as usize; 
-    renderer::render_world(&mut framebuffer, &maze, block_size, &player, &textures, &npcs, column_step);
+    renderer::render_world(&mut framebuffer, &maze, block_size, &player, &textures, &npcs, &coins, column_step);
     let minimap_scale = 14; // increased pixels per cell for bigger minimap
     // place minimap at 12,12 offset
-    minimap::render_minimap(&mut framebuffer, &maze, minimap_scale, &player, 12, 12, block_size, &npcs, &mut discovered);
+    minimap::render_minimap(&mut framebuffer, &maze, minimap_scale, &player, 12, 12, block_size, &npcs, &coins, &mut discovered);
 
-    // 4. swap buffers (draw framebuffer and overlay FPS)
+    // 4. swap buffers (draw framebuffer with coin counter and FPS)
     let fps = window.get_fps();
-    framebuffer.swap_buffers(&mut window, &raylib_thread, Some(fps as i32));
+    framebuffer.swap_buffers_with_coins(&mut window, &raylib_thread, Some(fps as i32), total_coins_collected, coins.len());
+    
     // update music streaming buffers each frame
     audio.update();
         // toggle mouse capture with ESC key (currently only toggles state; we avoid forcing

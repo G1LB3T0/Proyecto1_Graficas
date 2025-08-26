@@ -127,6 +127,22 @@ impl NPC {
     }
 }
 
+pub struct Coin {
+    pub pos: Vector2,
+    pub animation_time: f32, // for animation frames
+    pub collected: bool,
+}
+
+impl Coin {
+    pub fn new(x: f32, y: f32) -> Self {
+        Coin {
+            pos: Vector2::new(x, y),
+            animation_time: 0.0,
+            collected: false,
+        }
+    }
+}
+
 pub fn load_npcs_from_maze(maze: &Maze, block_size: usize) -> Vec<NPC> {
     let mut out = Vec::new();
     for (ry, row) in maze.iter().enumerate() {
@@ -135,6 +151,20 @@ pub fn load_npcs_from_maze(maze: &Maze, block_size: usize) -> Vec<NPC> {
                 let cx = (rx as f32 + 0.5) * block_size as f32;
                 let cy = (ry as f32 + 0.5) * block_size as f32;
                 out.push(NPC::new(cx, cy, 4.5));
+            }
+        }
+    }
+    out
+}
+
+pub fn load_coins_from_maze(maze: &Maze, block_size: usize) -> Vec<Coin> {
+    let mut out = Vec::new();
+    for (ry, row) in maze.iter().enumerate() {
+        for (rx, &cell) in row.iter().enumerate() {
+            if cell == 'C' {
+                let cx = (rx as f32 + 0.5) * block_size as f32;
+                let cy = (ry as f32 + 0.5) * block_size as f32;
+                out.push(Coin::new(cx, cy));
             }
         }
     }
@@ -207,6 +237,35 @@ pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size
     touched
 }
 
+pub fn update_coins(coins: &mut Vec<Coin>, player: &Player, block_size: usize) -> usize {
+    let mut collected_count = 0;
+    let collection_distance = (block_size as f32) * 0.4; // slightly larger collection radius
+    
+    for coin in coins.iter_mut() {
+        if coin.collected {
+            continue;
+        }
+        
+        // Update animation
+        coin.animation_time += 0.15; // controls animation speed
+        if coin.animation_time > std::f32::consts::TAU {
+            coin.animation_time = coin.animation_time % std::f32::consts::TAU;
+        }
+        
+        // Check if player is close enough to collect
+        let dx = player.pos.x - coin.pos.x;
+        let dy = player.pos.y - coin.pos.y;
+        let distance = (dx * dx + dy * dy).sqrt();
+        
+        if distance <= collection_distance {
+            coin.collected = true;
+            collected_count += 1;
+        }
+    }
+    
+    collected_count
+}
+
 pub fn render_npcs(framebuffer: &mut Framebuffer, textures: &TextureAtlas, player: &Player, npcs: &Vec<NPC>) {
     let num_rays = framebuffer.width as f32;
     let hh = framebuffer.height as f32 / 2.0;
@@ -252,6 +311,58 @@ pub fn render_npcs(framebuffer: &mut Framebuffer, textures: &TextureAtlas, playe
                     } else {
                         framebuffer.set_current_color(Color::new(200,30,30,255));
                         framebuffer.set_pixel(px as u32, y as u32);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn render_coins(framebuffer: &mut Framebuffer, textures: &TextureAtlas, player: &Player, coins: &Vec<Coin>) {
+    let num_rays = framebuffer.width as f32;
+    let hh = framebuffer.height as f32 / 2.0;
+
+    for coin in coins.iter() {
+        if coin.collected {
+            continue;
+        }
+        
+        let cx = coin.pos.x;
+        let cy = coin.pos.y;
+        let dx = cx - player.pos.x;
+        let dy = cy - player.pos.y;
+        let dist = (dx*dx + dy*dy).sqrt().max(0.001);
+        let ang = dy.atan2(dx);
+        let rel_ang = (ang - player.a + std::f32::consts::PI).rem_euclid(2.0*std::f32::consts::PI) - std::f32::consts::PI;
+        let half_fov = player.fov / 2.0;
+        
+        if rel_ang.abs() > half_fov { 
+            continue; 
+        }
+        
+        let screen_x = ((rel_ang + half_fov) / player.fov) * num_rays;
+        
+        // Add floating motion
+        let float_offset = 8.0 * (coin.animation_time * 0.8).sin();
+        let sprite_height = (hh / dist) * 60.0; // slightly smaller than NPCs
+        let top = (hh - (sprite_height/2.0) + float_offset) as isize;
+        let bottom = (hh + (sprite_height/2.0) + float_offset) as isize;
+        
+        let sx = screen_x as isize;
+        let sprite_screen_w = ((sprite_height * 0.8).max(4.0)) as isize; // slightly wider
+        let half_w = (sprite_screen_w / 2).max(1);
+
+        for xoff in -half_w..=half_w {
+            let u = (xoff + half_w) as f32 / (sprite_screen_w as f32);
+            for y in top.max(0)..bottom.min(framebuffer.height as isize) {
+                let v = (y as f32 - top as f32) / (bottom as f32 - top as f32 + 1.0);
+                let px = sx + xoff;
+                if px >= 0 && px < num_rays as isize {
+                    if let Some(col) = textures.sample_coin(u, v, coin.animation_time) {
+                        if col.a > 64 { // higher alpha threshold for better visibility
+                            framebuffer.set_current_color(col);
+                            framebuffer.set_pixel(px as u32, y as u32);
+                        }
                     }
                 }
             }

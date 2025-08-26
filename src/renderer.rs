@@ -7,7 +7,7 @@ use crate::maze::Maze;
 use crate::player::Player;
 use crate::caster::cast_ray;
 use crate::textures::{TextureAtlas, TextureKind};
-use crate::sprite::NPC;
+use crate::sprite::{NPC, Coin};
 use std::f32::consts::PI;
 
 fn cell_to_color(cell: char) -> Color {
@@ -27,7 +27,7 @@ fn draw_cell(
     block_size: usize,
     cell: char,
 ) {
-    if cell == ' ' { return; }
+    if cell == ' ' || cell == 'C' { return; } // 'C' should be empty space for coins
     let color = cell_to_color(cell);
     framebuffer.set_current_color(color);
     for x in xo..xo + block_size {
@@ -66,6 +66,7 @@ pub fn render_world(
     player: &Player,
     textures: &TextureAtlas,
     npcs: &Vec<NPC>,
+    coins: &Vec<Coin>,
     column_step: usize,
 ) {
     // Render using coarse columns to reduce the number of rays (improves FPS).
@@ -192,6 +193,50 @@ pub fn render_world(
                 let u = (xoff + half) as f32 / (w as f32);
                 if let Some(col) = textures.sample_npc(u, v) {
                     if col.a > 16 {
+                        framebuffer.set_current_color(col);
+                        framebuffer.set_pixel(px as u32, y as u32);
+                    }
+                }
+            }
+        }
+    }
+
+    // render coins with occlusion using column depth buffer
+    for coin in coins.iter() {
+        if coin.collected { continue; }
+        
+        let dx = coin.pos.x - player.pos.x;
+        let dy = coin.pos.y - player.pos.y;
+        let dist = (dx*dx + dy*dy).sqrt().max(0.001);
+        let ang = dy.atan2(dx);
+        let rel = (ang - player.a + std::f32::consts::PI).rem_euclid(2.0*std::f32::consts::PI) - std::f32::consts::PI;
+        if rel.abs() > player.fov / 2.0 { continue }
+
+        // screen_x in pixels (full framebuffer width), then we will map pixel -> column index
+        let screen_x = ((rel + player.fov/2.0) / player.fov) * framebuffer.width as f32;
+        
+        // Add floating motion
+        let float_offset = 8.0 * (coin.animation_time * 0.8).sin();
+        let sprite_h = (hh / dist) * 60.0; // slightly smaller than NPCs
+        let top = (hh - sprite_h/2.0 + float_offset) as isize;
+        let bottom = (hh + sprite_h/2.0 + float_offset) as isize;
+        let sx = screen_x as isize;
+        let w = ((sprite_h * 0.8).max(4.0)) as isize; // slightly wider
+        let half = (w / 2).max(1);
+
+        for xoff in -half..=half {
+            let px = sx + xoff;
+            if px < 0 { continue }
+            // map pixel x to depth_buffer column index (integer division by COLUMN_STEP)
+            let col_idx = (px as usize) / column_step;
+            if col_idx >= num_rays { continue }
+            if dist > depth_buffer[col_idx] - 1.0 { continue } // occlusion check
+
+            for y in top.max(0)..=bottom.min(framebuffer.height as isize - 1) {
+                let v = (y as f32 - top as f32) / (bottom as f32 - top as f32 + 1.0);
+                let u = (xoff + half) as f32 / (w as f32);
+                if let Some(col) = textures.sample_coin(u, v, coin.animation_time) {
+                    if col.a > 64 { // higher alpha threshold for better visibility
                         framebuffer.set_current_color(col);
                         framebuffer.set_pixel(px as u32, y as u32);
                     }
