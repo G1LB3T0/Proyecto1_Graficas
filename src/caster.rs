@@ -21,6 +21,7 @@ pub fn cast_ray(
   a: f32,
   block_size: usize,
   _draw_line: bool,
+  _doors_open: bool,
 ) -> Intersect {
   // Use DDA (grid-based) raycasting for performance.
   // Work in cell coordinates (each cell = 1.0); convert player position accordingly.
@@ -76,6 +77,7 @@ pub fn cast_ray(
     if map_y < 0 || map_x < 0 { break; }
     if (map_y as usize) < maze.len() && (map_x as usize) < maze[map_y as usize].len() {
       // treat 'R' and 'C' as non-blocking so rays pass through
+      // 'G' (door) always stops rays for rendering, but collision is handled separately
       let cell = maze[map_y as usize][map_x as usize];
       if cell != ' ' && cell != 'R' && cell != 'C' {
         hit = true;

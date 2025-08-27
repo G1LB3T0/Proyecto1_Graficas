@@ -107,8 +107,9 @@ fn main() {
         fov: PI / 3.0,
     };
 
-    // start with mouse capture disabled; user can toggle with ESC
-    let mut capture_mouse = false;
+    // start with mouse capture enabled for better FPS-style controls
+    let mut capture_mouse = true;
+    window.hide_cursor(); // hide cursor initially
 
     // load NPCs from maze
     let mut npcs = sprite::load_npcs_from_maze(&maze, block_size);
@@ -123,10 +124,13 @@ fn main() {
         framebuffer.clear();
 
     // 2. move the player on user input (with collision checks)
-    process_events(&mut player, &window, &maze, block_size);
+    // doors open when all coins are collected
+    let doors_open = total_coins_collected >= coins.len();
+    process_events(&mut player, &mut window, &maze, block_size, capture_mouse, doors_open);
 
         // update NPCs and check for collision (player death)
-        let player_dead = sprite::update_npcs(&mut npcs, &player, &maze, block_size);
+        let doors_open = total_coins_collected >= coins.len();
+        let player_dead = sprite::update_npcs(&mut npcs, &player, &maze, block_size, doors_open);
         
         // update coins and check for collection
         let coins_collected_this_frame = sprite::update_coins(&mut coins, &player, block_size);
@@ -196,7 +200,9 @@ fn main() {
     // 3. draw stuff: always render 3D world and a stylized minimap
     // pass column_step derived from render_scale to the renderer (more aggressive when downscaling)
     let column_step = render_scale as usize; 
-    renderer::render_world(&mut framebuffer, &maze, block_size, &player, &textures, &npcs, &coins, column_step);
+    // doors open when all coins are collected
+    let doors_open = total_coins_collected >= coins.len();
+    renderer::render_world(&mut framebuffer, &maze, block_size, &player, &textures, &npcs, &coins, column_step, doors_open);
     let minimap_scale = 14; // increased pixels per cell for bigger minimap
     // place minimap at 12,12 offset
     minimap::render_minimap(&mut framebuffer, &maze, minimap_scale, &player, 12, 12, block_size, &npcs, &coins, &mut discovered);

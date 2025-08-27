@@ -172,7 +172,7 @@ pub fn load_coins_from_maze(maze: &Maze, block_size: usize) -> Vec<Coin> {
     out
 }
 
-pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size: usize) -> bool {
+pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size: usize, doors_open: bool) -> bool {
     // return true when any NPC touches the player
     let mut touched = false;
     for npc in npcs.iter_mut() {
@@ -196,16 +196,16 @@ pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size
                 let vy = dir_y / len * npc.speed;
                 let nx = npc.pos.x + vx;
                 let ny = npc.pos.y + vy;
-                if can_move_to(maze, nx, ny, block_size) {
+                if can_move_to(maze, nx, ny, block_size, doors_open) {
                     npc.pos.x = nx;
                     npc.pos.y = ny;
                     continue;
                 }
                 // sliding fallback
-                if can_move_to(maze, nx, npc.pos.y, block_size) {
+                if can_move_to(maze, nx, npc.pos.y, block_size, doors_open) {
                     npc.pos.x = nx;
                 }
-                if can_move_to(maze, npc.pos.x, ny, block_size) {
+                if can_move_to(maze, npc.pos.x, ny, block_size, doors_open) {
                     npc.pos.y = ny;
                 }
             } else {
@@ -219,15 +219,15 @@ pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size
                     let vy = dy2 / l2 * npc.speed;
                     let nx = npc.pos.x + vx;
                     let ny = npc.pos.y + vy;
-                    if can_move_to(maze, nx, ny, block_size) {
+                    if can_move_to(maze, nx, ny, block_size, doors_open) {
                         npc.pos.x = nx;
                         npc.pos.y = ny;
                     } else {
                         // as a last resort try axis sliding
-                        if can_move_to(maze, nx, npc.pos.y, block_size) {
+                        if can_move_to(maze, nx, npc.pos.y, block_size, doors_open) {
                             npc.pos.x = nx;
                         }
-                        if can_move_to(maze, npc.pos.x, ny, block_size) {
+                        if can_move_to(maze, npc.pos.x, ny, block_size, doors_open) {
                             npc.pos.y = ny;
                         }
                     }

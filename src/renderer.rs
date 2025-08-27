@@ -16,7 +16,7 @@ fn cell_to_color(cell: char) -> Color {
         '+' => Color::BLUEVIOLET,
         '-' => Color::VIOLET,
         '|' => Color::VIOLET,
-        'g' => Color::GREEN,
+        'G' => Color::GREEN, // Changed from 'g' to 'G' for doors
         _ => Color::WHITE,
     }
 }
@@ -28,7 +28,7 @@ fn draw_cell(
     block_size: usize,
     cell: char,
 ) {
-    if cell == ' ' || cell == 'C' { return; } // 'C' should be empty space for coins
+    if cell == ' ' || cell == 'C' || cell == 'G' { return; } // 'C' should be empty space for coins, 'G' for doors (handled in 3D)
     let color = cell_to_color(cell);
     framebuffer.set_current_color(color);
     for x in xo..xo + block_size {
@@ -43,6 +43,7 @@ pub fn render_maze(
     maze: &Maze,
     block_size: usize,
     player: &Player,
+    doors_open: bool,
 ) {
     for (row_index, row) in maze.iter().enumerate() {
         for (col_index, &cell) in row.iter().enumerate() {
@@ -56,7 +57,7 @@ pub fn render_maze(
     for i in 0..5 {
         let t = i as f32 / 5.0;
         let a = player.a - (player.fov / 2.0) + (player.fov * t);
-        cast_ray(framebuffer, &maze, &player, a, block_size, true);
+        cast_ray(framebuffer, &maze, &player, a, block_size, true, doors_open);
     }
 }
 
@@ -69,6 +70,7 @@ pub fn render_world(
     npcs: &Vec<NPC>,
     coins: &Vec<Coin>,
     column_step: usize,
+    doors_open: bool,
 ) {
     // Render using coarse columns to reduce the number of rays (improves FPS).
     // column_step controls how many horizontal pixels share the same ray.
@@ -87,7 +89,7 @@ pub fn render_world(
         let a = player.a - (player.fov / 2.0) + (player.fov * t);
         // sky: sample based on ray angle (u)
         let sky_u = (a / (2.0 * PI)).rem_euclid(1.0);
-        let intersect = cast_ray(framebuffer, &maze, &player, a, block_size, false);
+        let intersect = cast_ray(framebuffer, &maze, &player, a, block_size, false, doors_open);
 
         // Correct fish-eye: compute angular difference and use cos to get perpendicular distance
         let distance = intersect.distance.max(0.0001);
@@ -113,7 +115,11 @@ pub fn render_world(
                 if intersect.side == 0 { frac_y } else { frac_x }
             };
 
-        let kind = match intersect.impact { '+' => TextureKind::Pillar, _ => TextureKind::Wall };
+        let kind = match intersect.impact { 
+            '+' => TextureKind::Pillar, 
+            'G' => if doors_open { TextureKind::DoorOpen } else { TextureKind::DoorClosed },
+            _ => TextureKind::Wall 
+        };
 
         // draw sky above the top of the wall column (same color across the COLUMN_STEP width)
         for y in 0..top.max(0) as isize {
@@ -135,13 +141,24 @@ pub fn render_world(
             let tex_h_pixels: u32 = match kind {
                 TextureKind::Wall => textures.wall.as_ref().map(|i| i.h).unwrap_or(32),
                 TextureKind::Pillar => textures.pillar.as_ref().map(|i| i.h).unwrap_or(32),
+                TextureKind::DoorClosed => textures.door_closed.as_ref().map(|i| i.h).unwrap_or(32),
+                TextureKind::DoorOpen => textures.door_open.as_ref().map(|i| i.h).unwrap_or(32),
             };
             // Tile the texture according to world-space wall height (block_size) so the
             // texture repeats per block remain constant regardless of camera distance.
-            let repeats_world = (block_size as f32) / (tex_h_pixels as f32);
-            // clamp extreme values to avoid too many tiny tiles or excessive stretching
-            let repeats = repeats_world.clamp(0.25, 4.0);
-            let v_param = v_frac * repeats;
+            // Exception: doors should be displayed as single textures without tiling
+            let v_param = match kind {
+                TextureKind::DoorClosed | TextureKind::DoorOpen => {
+                    // For doors, use the screen fraction directly without tiling
+                    v_frac
+                },
+                _ => {
+                    // For walls and pillars, use the tiling logic
+                    let repeats_world = (block_size as f32) / (tex_h_pixels as f32);
+                    let repeats = repeats_world.clamp(0.25, 4.0);
+                    v_frac * repeats
+                }
+            };
             let col = textures.sample(kind, u, v_param);
             framebuffer.set_current_color(col);
             for xoff in 0..column_step {

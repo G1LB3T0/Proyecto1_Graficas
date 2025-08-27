@@ -11,7 +11,7 @@ pub struct Player {
 }
 
 // Check whether a point (x,y) in world coordinates is inside a free cell of the maze
-pub fn can_move_to(maze: &Maze, x: f32, y: f32, block_size: usize) -> bool {
+pub fn can_move_to(maze: &Maze, x: f32, y: f32, block_size: usize, doors_open: bool) -> bool {
     if maze.is_empty() {
         return true;
     }
@@ -26,22 +26,29 @@ pub fn can_move_to(maze: &Maze, x: f32, y: f32, block_size: usize) -> bool {
     if maze[j].is_empty() || i >= maze[j].len() {
         return false;
     }
+    let cell = maze[j][i];
     // treat 'R' (sprite NPC) and 'C' (coins) as non-blocking so player can walk around/over them
-    maze[j][i] == ' ' || maze[j][i] == 'R' || maze[j][i] == 'C'
+    // treat 'G' (door) as non-blocking only if doors are open
+    cell == ' ' || cell == 'R' || cell == 'C' || (cell == 'G' && doors_open)
 }
 
 // Process input and perform movement with simple collision against maze walls.
 // Uses axis-aligned sliding: if full move collides, tries X-only and Y-only moves.
-pub fn process_events(player: &mut Player, rl: &RaylibHandle, maze: &Maze, block_size: usize) {
+pub fn process_events(player: &mut Player, rl: &mut RaylibHandle, maze: &Maze, block_size: usize, capture_mouse: bool, doors_open: bool) {
     // Movement: WASD -> forward/back + strafing. Mouse -> camera yaw.
     // Slightly increased movement speed so player can better evade NPCs
     const MOVE_SPEED: f32 = 7.0;
     const MOUSE_SENSITIVITY: f32 = 0.0035;
 
-    // Mouse look: apply relative mouse delta only while right mouse button is held
-    if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_RIGHT) {
+    // Mouse look: apply relative mouse delta when mouse is captured (ESC key toggles this)
+    if capture_mouse {
         let md = rl.get_mouse_delta();
         player.a -= md.x as f32 * MOUSE_SENSITIVITY;
+        
+        // Keep mouse centered to prevent going out of bounds during continuous rotation
+        let screen_width = rl.get_screen_width();
+        let screen_height = rl.get_screen_height();
+        rl.set_mouse_position(Vector2::new((screen_width / 2) as f32, (screen_height / 2) as f32));
     }
 
     // WASD: W forward, S backward, A left strafe, D right strafe
@@ -66,14 +73,14 @@ pub fn process_events(player: &mut Player, rl: &RaylibHandle, maze: &Maze, block
         let new_y = player.pos.y + dy;
 
         // collision with sliding: try full move, then X-only and Y-only
-        if can_move_to(maze, new_x, new_y, block_size) {
+        if can_move_to(maze, new_x, new_y, block_size, doors_open) {
             player.pos.x = new_x;
             player.pos.y = new_y;
         } else {
-            if can_move_to(maze, new_x, player.pos.y, block_size) {
+            if can_move_to(maze, new_x, player.pos.y, block_size, doors_open) {
                 player.pos.x = new_x;
             }
-            if can_move_to(maze, player.pos.x, new_y, block_size) {
+            if can_move_to(maze, player.pos.x, new_y, block_size, doors_open) {
                 player.pos.y = new_y;
             }
         }

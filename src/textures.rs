@@ -9,6 +9,8 @@ use crate::anim::CoinAnimation;
 pub enum TextureKind {
     Wall,
     Pillar,
+    DoorClosed,
+    DoorOpen,
 }
 
 pub struct ImageBuf {
@@ -26,6 +28,8 @@ pub struct TextureAtlas {
     pub menu: Option<ImageBuf>,
     pub game_over: Option<ImageBuf>,
     pub coin: Option<ImageBuf>,
+    pub door_closed: Option<ImageBuf>,
+    pub door_open: Option<ImageBuf>,
 }
 
 impl TextureAtlas {
@@ -242,7 +246,52 @@ impl TextureAtlas {
             }
         }
 
-    TextureAtlas { wall, pillar, npc, sky, floor, menu, game_over, coin }
+        // Load door textures
+        let door_closed_candidates = [
+            "./textures/puertacerrada.png",
+            "textures/puertacerrada.png",
+            "../textures/puertacerrada.png",
+        ];
+        let mut door_closed: Option<ImageBuf> = None;
+        for p in door_closed_candidates.iter() {
+            let path = Path::new(p);
+            if path.exists() {
+                eprintln!("[textures] found door closed texture at {}", path.display());
+                match image::open(path) {
+                    Ok(img) => {
+                        let img = img.to_rgba8();
+                        let (w, h) = img.dimensions();
+                        door_closed = Some(ImageBuf { w, h, data: img.into_raw() });
+                        break;
+                    }
+                    Err(e) => eprintln!("[textures] failed to load {}: {:?}", path.display(), e),
+                }
+            }
+        }
+
+        let door_open_candidates = [
+            "./textures/Puertaabierta.png",
+            "textures/Puertaabierta.png", 
+            "../textures/Puertaabierta.png",
+        ];
+        let mut door_open: Option<ImageBuf> = None;
+        for p in door_open_candidates.iter() {
+            let path = Path::new(p);
+            if path.exists() {
+                eprintln!("[textures] found door open texture at {}", path.display());
+                match image::open(path) {
+                    Ok(img) => {
+                        let img = img.to_rgba8();
+                        let (w, h) = img.dimensions();
+                        door_open = Some(ImageBuf { w, h, data: img.into_raw() });
+                        break;
+                    }
+                    Err(e) => eprintln!("[textures] failed to load {}: {:?}", path.display(), e),
+                }
+            }
+        }
+
+    TextureAtlas { wall, pillar, npc, sky, floor, menu, game_over, coin, door_closed, door_open }
     }
 
     // Sample color from the chosen texture image by normalized u,v in [0,1]
@@ -255,6 +304,8 @@ impl TextureAtlas {
         let img_opt = match kind {
             TextureKind::Wall => &self.wall,
             TextureKind::Pillar => &self.pillar,
+            TextureKind::DoorClosed => &self.door_closed,
+            TextureKind::DoorOpen => &self.door_open,
         };
 
         if img_opt.is_none() {
