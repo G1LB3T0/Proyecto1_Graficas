@@ -128,6 +128,18 @@ fn main() {
     let doors_open = total_coins_collected >= coins.len();
     process_events(&mut player, &mut window, &maze, block_size, capture_mouse, doors_open);
 
+    // check if player has escaped (is standing on the door position when doors are open)
+    let player_escaped = doors_open && {
+        let player_grid_x = (player.pos.x / block_size as f32) as usize;
+        let player_grid_y = (player.pos.y / block_size as f32) as usize;
+        // Check if player is on a door position ('G' in the maze)
+        if player_grid_y < maze.len() && player_grid_x < maze[player_grid_y].len() {
+            maze[player_grid_y][player_grid_x] == 'G'
+        } else {
+            false
+        }
+    };
+
         // update NPCs and check for collision (player death)
         let doors_open = total_coins_collected >= coins.len();
         let player_dead = sprite::update_npcs(&mut npcs, &player, &maze, block_size, doors_open);
@@ -135,6 +147,63 @@ fn main() {
         // update coins and check for collection
         let coins_collected_this_frame = sprite::update_coins(&mut coins, &player, block_size);
         total_coins_collected += coins_collected_this_frame;
+
+        // check for victory condition (player escaped through the door)
+        if player_escaped {
+            // Victory screen: Enter to restart, Q to quit
+            loop {
+                framebuffer.clear();
+                
+                // poll keys before drawing to avoid borrow conflicts
+                if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
+                    // reset player, npcs, coins, discovered and break to resume game
+                    player.pos = Vector2::new(150.0, 150.0);
+                    player.a = PI / 3.0;
+                    npcs = sprite::load_npcs_from_maze(&maze, block_size);
+                    coins = sprite::load_coins_from_maze(&maze, block_size);
+                    total_coins_collected = 0;
+                    discovered = maze.iter().map(|r| vec![false; r.len()]).collect();
+                    break;
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_Q) {
+                    // cleanup audio and quit
+                    audio.cleanup();
+                    return;
+                }
+
+                // draw with raylib (query sizes first)
+                let screen_w = window.get_screen_width();
+                let screen_h = window.get_screen_height();
+                
+                // Clear framebuffer and draw victory background
+                let fbw = framebuffer.width;
+                let fbh = framebuffer.height;
+                
+                // If victoria texture exists, stretch it to cover the entire framebuffer
+                for y in 0..fbh {
+                    for x in 0..fbw {
+                        let u = x as f32 / fbw as f32;
+                        let v = y as f32 / fbh as f32;
+                        let col = textures.sample_victoria(u, v);
+                        framebuffer.set_current_color(col);
+                        framebuffer.set_pixel(x, y);
+                    }
+                }
+                
+                if let Ok(texture) = window.load_texture_from_image(&raylib_thread, &framebuffer.color_buffer) {
+                    let mut d = window.begin_drawing(&raylib_thread);
+                    let src = Rectangle::new(0.0,0.0,framebuffer.width as f32, framebuffer.height as f32);
+                    let dest = Rectangle::new(0.0,0.0,screen_w as f32, screen_h as f32);
+                    d.draw_texture_pro(&texture, src, dest, Vector2::new(0.0,0.0), 0.0, Color::WHITE);
+                    
+                    // Draw controls
+                    d.draw_text("ENTER = REINICIAR  Q = SALIR", 24, 56, 16, Color::WHITE);
+                }
+                
+                thread::sleep(Duration::from_millis(16));
+            }
+        }
+
     if player_dead {
             // simple Game Over screen: Enter to restart, Q to quit
             loop {

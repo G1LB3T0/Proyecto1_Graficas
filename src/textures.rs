@@ -27,6 +27,7 @@ pub struct TextureAtlas {
     pub floor: Option<ImageBuf>,
     pub menu: Option<ImageBuf>,
     pub game_over: Option<ImageBuf>,
+    pub victoria: Option<ImageBuf>,
     pub coin: Option<ImageBuf>,
     pub door_closed: Option<ImageBuf>,
     pub door_open: Option<ImageBuf>,
@@ -223,6 +224,29 @@ impl TextureAtlas {
             }
         }
 
+        // try victoria texture
+        let victoria_candidates = [
+            "./textures/victoria.png",
+            "textures/victoria.png",
+            "../textures/victoria.png",
+        ];
+        let mut victoria: Option<ImageBuf> = None;
+        for p in victoria_candidates.iter() {
+            let path = Path::new(p);
+            if path.exists() {
+                eprintln!("[textures] found victoria image at {}", path.display());
+                match image::open(path) {
+                    Ok(img) => {
+                        let img = img.to_rgba8();
+                        let (w, h) = img.dimensions();
+                        victoria = Some(ImageBuf { w, h, data: img.into_raw() });
+                        break;
+                    }
+                    Err(e) => eprintln!("[textures] failed to load {}: {:?}", path.display(), e),
+                }
+            }
+        }
+
         // try coin spritesheet
         let coin_candidates = [
             "./textures/coin_spin_64x64_12f.png",
@@ -291,7 +315,7 @@ impl TextureAtlas {
             }
         }
 
-    TextureAtlas { wall, pillar, npc, sky, floor, menu, game_over, coin, door_closed, door_open }
+    TextureAtlas { wall, pillar, npc, sky, floor, menu, game_over, victoria, coin, door_closed, door_open }
     }
 
     // Sample color from the chosen texture image by normalized u,v in [0,1]
@@ -510,6 +534,33 @@ impl TextureAtlas {
         // fallback: red vignette
         let top = Color::new(80, 10, 10, 255);
         let bottom = Color::new(20, 10, 10, 255);
+        let mix = v;
+        let r = (top.r as f32 * (1.0 - mix) + bottom.r as f32 * mix) as u8;
+        let g = (top.g as f32 * (1.0 - mix) + bottom.g as f32 * mix) as u8;
+        let b = (top.b as f32 * (1.0 - mix) + bottom.b as f32 * mix) as u8;
+        Color::new(r, g, b, 255)
+    }
+
+    pub fn sample_victoria(&self, u: f32, v: f32) -> Color {
+        let u = u.fract().abs();
+        let v = v.fract().abs();
+        if let Some(img) = &self.victoria {
+            if img.data.len() >= 4 {
+                let x = ((u * img.w as f32).clamp(0.0, (img.w - 1) as f32)) as u32;
+                let y = ((v * img.h as f32).clamp(0.0, (img.h - 1) as f32)) as u32;
+                let idx = ((y * img.w + x) * 4) as usize;
+                if idx + 3 < img.data.len() {
+                    let r = img.data[idx];
+                    let g = img.data[idx + 1];
+                    let b = img.data[idx + 2];
+                    let a = img.data[idx + 3];
+                    return Color::new(r as u8, g as u8, b as u8, a as u8);
+                }
+            }
+        }
+        // fallback: green vignette for victory
+        let top = Color::new(10, 80, 10, 255);
+        let bottom = Color::new(10, 40, 10, 255);
         let mix = v;
         let r = (top.r as f32 * (1.0 - mix) + bottom.r as f32 * mix) as u8;
         let g = (top.g as f32 * (1.0 - mix) + bottom.g as f32 * mix) as u8;
