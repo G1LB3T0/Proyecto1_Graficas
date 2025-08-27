@@ -1,7 +1,0 @@
-C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/raylib.lib
-C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/include/raylib.h
-C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/include/rlgl.h
-C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/include/raymath.h
-C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/pkgconfig/raylib.pc
-C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/cmake/raylib/raylib-config-version.cmake
-C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/lib/cmake/raylib/raylib-config.cmake
