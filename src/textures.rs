@@ -3,6 +3,7 @@
 use raylib::prelude::*;
 use std::path::Path;
 use image::GenericImageView;
+use crate::anim::CoinAnimation;
 
 #[derive(Copy, Clone, Debug)]
 pub enum TextureKind {
@@ -465,7 +466,7 @@ impl TextureAtlas {
         Color::new(r, g, b, 255)
     }
 
-    // Sample coin spritesheet with animation
+    // Sample coin spritesheet with animation using anim module
     // The spritesheet has 12 frames arranged horizontally (64x64 each)
     pub fn sample_coin(&self, u: f32, v: f32, animation_time: f32) -> Option<Color> {
         let u = u.fract().abs();
@@ -473,17 +474,13 @@ impl TextureAtlas {
         
         if let Some(img) = &self.coin {
             if img.data.len() >= 4 {
-                // Calculate which frame to use (12 frames total)
+                // Get frame info from animation module
                 let num_frames = 12;
-                let frame_time = (2.0 * std::f32::consts::PI) / num_frames as f32;
-                let current_frame = ((animation_time / frame_time) as usize) % num_frames;
-                
-                // Each frame is 64 pixels wide, so the total width should be 64*12 = 768
                 let frame_width = img.w / num_frames as u32;
                 let frame_height = img.h;
                 
-                // Calculate the x offset for the current frame
-                let frame_x_offset = current_frame as u32 * frame_width;
+                // Get the x offset for the current frame using anim module
+                let frame_x_offset = CoinAnimation::get_frame_offset(animation_time, frame_width);
                 
                 // Sample within the current frame
                 let x = ((u * frame_width as f32).clamp(0.0, (frame_width - 1) as f32)) as u32 + frame_x_offset;

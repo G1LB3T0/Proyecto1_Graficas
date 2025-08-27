@@ -131,9 +131,6 @@ fn main() {
         // update coins and check for collection
         let coins_collected_this_frame = sprite::update_coins(&mut coins, &player, block_size);
         total_coins_collected += coins_collected_this_frame;
-        if coins_collected_this_frame > 0 {
-            eprintln!("[debug] collected {} coins! Total: {}/{}", coins_collected_this_frame, total_coins_collected, coins.len());
-        }
     if player_dead {
             // simple Game Over screen: Enter to restart, Q to quit
             loop {

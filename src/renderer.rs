@@ -8,6 +8,7 @@ use crate::player::Player;
 use crate::caster::cast_ray;
 use crate::textures::{TextureAtlas, TextureKind};
 use crate::sprite::{NPC, Coin};
+use crate::anim::CoinAnimation;
 use std::f32::consts::PI;
 
 fn cell_to_color(cell: char) -> Color {
@@ -215,8 +216,8 @@ pub fn render_world(
         // screen_x in pixels (full framebuffer width), then we will map pixel -> column index
         let screen_x = ((rel + player.fov/2.0) / player.fov) * framebuffer.width as f32;
         
-        // Add floating motion
-        let float_offset = 8.0 * (coin.animation_time * 0.8).sin();
+        // Add floating motion using anim module
+        let float_offset = CoinAnimation::get_float_offset(coin.animation_time);
         let sprite_h = (hh / dist) * 60.0; // slightly smaller than NPCs
         let top = (hh - sprite_h/2.0 + float_offset) as isize;
         let bottom = (hh + sprite_h/2.0 + float_offset) as isize;

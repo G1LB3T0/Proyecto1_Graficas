@@ -6,6 +6,7 @@ use crate::maze::Maze;
 use crate::player::Player;
 use crate::textures::TextureAtlas;
 use crate::player::can_move_to;
+use crate::anim::CoinAnimation;
 use std::collections::VecDeque;
 
 // Helpers: grid-based Bresenham line check for line-of-sight and a BFS to get the next
@@ -29,7 +30,7 @@ fn in_bounds(maze: &Maze, i: isize, j: isize) -> bool {
 fn is_walkable_cell(maze: &Maze, i: isize, j: isize) -> bool {
     if !in_bounds(maze, i, j) { return false; }
     let c = maze[j as usize][i as usize];
-    c == ' ' || c == 'R'
+    c == ' ' || c == 'R' || c == 'C'
 }
 
 // Bresenham integer line between grid cells to test LOS (returns true when no wall cell encountered)
@@ -246,11 +247,8 @@ pub fn update_coins(coins: &mut Vec<Coin>, player: &Player, block_size: usize) -
             continue;
         }
         
-        // Update animation
-        coin.animation_time += 0.15; // controls animation speed
-        if coin.animation_time > std::f32::consts::TAU {
-            coin.animation_time = coin.animation_time % std::f32::consts::TAU;
-        }
+        // Update animation using anim module
+        coin.animation_time = CoinAnimation::update_time(coin.animation_time, 0.15);
         
         // Check if player is close enough to collect
         let dx = player.pos.x - coin.pos.x;
