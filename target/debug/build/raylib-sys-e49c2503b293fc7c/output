@@ -18,10 +18,31 @@ HOST_CMAKE = None
 CMAKE = None
 running: "cmake" "C:\\Users\\luisy\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\raylib-sys-5.5.1\\./raylib" "-G" "Visual Studio 17 2022" "-Thost=x64" "-Ax64" "-DCMAKE_BUILD_TYPE=Debug" "-DBUILD_EXAMPLES=OFF" "-DCMAKE_BUILD_TYPE=Debug" "-DSUPPORT_BUSY_WAIT_LOOP=OFF" "-DSUPPORT_FILEFORMAT_JPG=ON" "-DUSE_WAYLAND=OFF" "-DOPENGL_VERSION=OFF" "-DSUPPORT_SCREEN_CAPTURE=ON" "-DSUPPORT_GIF_RECORDING=ON" "-DPLATFORM=Desktop" "-DCMAKE_INSTALL_PREFIX=C:\\Users\\luisy\\Desktop\\Graficas\\ProyectoPatzan\\ProyectoPatzan\\target\\debug\\build\\raylib-sys-e49c2503b293fc7c\\out" "-DCMAKE_C_FLAGS= -nologo -MD -Brepro" "-DCMAKE_C_FLAGS_DEBUG= -nologo -MD -Brepro" "-DCMAKE_CXX_FLAGS= -nologo -MD -Brepro" "-DCMAKE_CXX_FLAGS_DEBUG= -nologo -MD -Brepro" "-DCMAKE_ASM_FLAGS= -nologo -MD -Brepro" "-DCMAKE_ASM_FLAGS_DEBUG= -nologo -MD -Brepro"
 -- Selecting Windows SDK version 10.0.22000.0 to target Windows 10.0.26100.
+-- The C compiler identification is MSVC 19.44.35211.0
+-- The CXX compiler identification is MSVC 19.44.35211.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test COMPILER_HAS_THOSE_TOGGLES
+-- Performing Test COMPILER_HAS_THOSE_TOGGLES - Failed
 -- Testing if -Werror=pointer-arith can be used -- Failed
 -- Testing if -Werror=implicit-function-declaration can be used -- Failed
 -- Testing if -fno-strict-aliasing can be used -- Failed
 -- Using raylib's GLFW
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - not found
+-- Found Threads: TRUE
 -- Including Win32 support
 -- Audio Backend: miniaudio
 -- Building raylib static library
@@ -29,13 +50,38 @@ running: "cmake" "C:\\Users\\luisy\\.cargo\\registry\\src\\index.crates.io-1949c
 -- Compiling with the flags:
 --   PLATFORM=PLATFORM_DESKTOP
 --   GRAPHICS=GRAPHICS_API_OPENGL_33
--- Configuring done (0.3s)
--- Generating done (1.6s)
+-- Configuring done (12.4s)
+-- Generating done (0.2s)
 -- Build files have been written to: C:/Users/luisy/Desktop/Graficas/ProyectoPatzan/ProyectoPatzan/target/debug/build/raylib-sys-e49c2503b293fc7c/out/build
 running: "cmake" "--build" "C:\\Users\\luisy\\Desktop\\Graficas\\ProyectoPatzan\\ProyectoPatzan\\target\\debug\\build\\raylib-sys-e49c2503b293fc7c\\out\\build" "--target" "install" "--config" "Debug" "--parallel" "8"
 MSBuild version 17.14.14+a129329f1 for .NET Framework
 
   1>Checking Build System
+  Building Custom Rule C:/Users/luisy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/raylib-sys-5.5.1/raylib/src/external/glfw/src/CMakeLists.txt
+  context.c
+  init.c
+  input.c
+  monitor.c
+  platform.c
+  vulkan.c
+  window.c
+  egl_context.c
+  osmesa_context.c
+  null_init.c
+  null_monitor.c
+  null_window.c
+  null_joystick.c
+  win32_module.c
+  win32_time.c
+  win32_thread.c
+  win32_init.c
+  win32_joystick.c
+  win32_monitor.c
+  win32_window.c
+  Generating Code...
+  Compiling...
+  wgl_context.c
+  Generating Code...
   glfw.vcxproj -> C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\build\raylib-sys-e49c2503b293fc7c\out\build\raylib\external\glfw\src\glfw.dir\Debug\glfw.lib
   Building Custom Rule C:/Users/luisy/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/raylib-sys-5.5.1/raylib/src/CMakeLists.txt
   raudio.c
@@ -79,7 +125,7 @@ cargo:rerun-if-env-changed=WindowsSDKVersion
 WindowsSDKVersion = None
 cargo:rerun-if-env-changed=LIB
 LIB = None
-PATH = Some(C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\deps;C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug;C:\Users\luisy\.rustup\toolchains\stable-x86_64-pc-windows-msvc\lib\rustlib\x86_64-pc-windows-msvc\lib;c:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\dotnet\;C:\Program Files\Git\cmd;C:\Users\luisy\AppData\Local\Microsoft\WindowsApps;;C:\Users\luisy\AppData\Local\Programs\Hyper\resources\bin;c:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\nodejs\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\CMake\bin;C:\Users\luisy\.cargo\bin;C:\Users\luisy\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\luisy\AppData\Local\Programs\Python\Python313\;C:\Users\luisy\AppData\Local\Microsoft\WindowsApps;;C:\Users\luisy\AppData\Local\Programs\Hyper\resources\bin;C:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\Users\luisy\AppData\Roaming\npm;C:\Users\luisy\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\luisy\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin)
+PATH = Some(C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug\deps;C:\Users\luisy\Desktop\Graficas\ProyectoPatzan\ProyectoPatzan\target\debug;C:\Users\luisy\.rustup\toolchains\stable-x86_64-pc-windows-msvc\lib\rustlib\x86_64-pc-windows-msvc\lib;c:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\dotnet\;C:\Program Files\Git\cmd;C:\Users\luisy\AppData\Local\Microsoft\WindowsApps;;C:\Users\luisy\AppData\Local\Programs\Hyper\resources\bin;c:\Users\luisy\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\nodejs\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\CMake\bin;C:\Users\luisy\.cargo\bin;C:\Users\luisy\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\luisy\AppData\Local\Programs\Python\Python313\;C:\Users\luisy\AppData\Local\Microsoft\WindowsApps;;C:\Users\luisy\AppData\Local\Programs\Hyper\resources\bin;C:\Users\luisy\AppData\Roaming\npm;C:\Users\luisy\AppData\Local\Programs\Microsoft VS Code\bin;c:\Users\luisy\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand;C:\Users\luisy\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin)
 cargo:rerun-if-env-changed=INCLUDE
 INCLUDE = None
 HOST = Some(x86_64-pc-windows-msvc)
