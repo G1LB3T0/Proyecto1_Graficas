@@ -151,7 +151,7 @@ pub fn load_npcs_from_maze(maze: &Maze, block_size: usize) -> Vec<NPC> {
             if cell == 'R' {
                 let cx = (rx as f32 + 0.5) * block_size as f32;
                 let cy = (ry as f32 + 0.5) * block_size as f32;
-                out.push(NPC::new(cx, cy, 4.5));
+                out.push(NPC::new(cx, cy, 6.0));
             }
         }
     }

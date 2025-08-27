@@ -98,6 +98,7 @@ impl Framebuffer {
         fps: Option<i32>,
         coins_collected: usize,
         total_coins: usize,
+        current_level: i32,
     ) {
         if let Ok(texture) = window.load_texture_from_image(raylib_thread, &self.color_buffer) {
             // Preserve aspect ratio: compute destination rect that fits the window without stretching
@@ -140,6 +141,11 @@ impl Framebuffer {
             let coins_text = format!("Monedas: {}/{}", coins_collected, total_coins);
             renderer.draw_rectangle(screen_w - 210, 10, 200, 30, Color::new(0, 0, 0, 120));
             renderer.draw_text(&coins_text, screen_w - 200, 20, 24, Color::GOLD);
+            
+            // Draw level indicator
+            let level_text = format!("Nivel: {}", current_level);
+            renderer.draw_rectangle(screen_w / 2 - 50, 10, 100, 30, Color::new(0, 0, 0, 120));
+            renderer.draw_text(&level_text, screen_w / 2 - 40, 20, 24, Color::CYAN);
         }
     }
 }

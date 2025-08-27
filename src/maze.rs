@@ -14,3 +14,13 @@ pub fn load_maze(filename: &str) -> Maze {
         .map(|line| line.unwrap().chars().collect())
         .collect()
 }
+
+pub fn load_maze_for_level(level: i32) -> Maze {
+    let filename = match level {
+        1 => "maze1.txt",
+        2 => "maze2.txt",
+        3 => "maze3.txt",
+        _ => "maze1.txt", // fallback
+    };
+    load_maze(filename)
+}

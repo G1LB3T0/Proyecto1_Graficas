@@ -3,14 +3,20 @@ use crate::textures::TextureAtlas;
 use raylib::prelude::*;
 
 pub enum MenuAction {
-    Start,
+    StartLevel(i32),
     Quit,
 }
 
-// Render a full-screen menu using the provided texture atlas. Returns action chosen by player.
+enum MenuState {
+    Main,
+    LevelSelect,
+}
+
 pub fn run_menu(window: &mut RaylibHandle, thread: &RaylibThread, framebuffer: &mut Framebuffer, textures: &TextureAtlas, audio: &mut crate::audio::AudioManager) -> MenuAction {
-    // Simple menu loop: draw menu image centered without stretching, overlay two options
-    let mut selection: usize = 0; // 0 = Jugar, 1 = Salir
+    let mut menu_state = MenuState::Main;
+    let mut main_selection: usize = 0; // 0 = Jugar, 1 = Salir
+    let mut level_selection: i32 = 1; // 1, 2, 3
+
     loop {
         // Check if window should close
         if window.window_should_close() {
@@ -19,6 +25,7 @@ pub fn run_menu(window: &mut RaylibHandle, thread: &RaylibThread, framebuffer: &
         
         framebuffer.clear();
 
+        // Draw background (same as before)
         let fb_w = framebuffer.width as u32;
         let fb_h = framebuffer.height as u32;
 
@@ -73,21 +80,46 @@ pub fn run_menu(window: &mut RaylibHandle, thread: &RaylibThread, framebuffer: &
             }
         }
 
-        // input handling: change selection and handle confirm/quit
-        if window.is_key_pressed(KeyboardKey::KEY_DOWN) || window.is_key_pressed(KeyboardKey::KEY_S) {
-            selection = (selection + 1) % 2;
-        }
-        if window.is_key_pressed(KeyboardKey::KEY_UP) || window.is_key_pressed(KeyboardKey::KEY_W) {
-            selection = (selection + 2 - 1) % 2; // previous
-        }
-        if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
-            if selection == 0 { return MenuAction::Start; } else { return MenuAction::Quit; }
-        }
-        if window.is_key_pressed(KeyboardKey::KEY_Q) {
-            return MenuAction::Quit;
+        // Input handling based on current menu state
+        match menu_state {
+            MenuState::Main => {
+                if window.is_key_pressed(KeyboardKey::KEY_DOWN) || window.is_key_pressed(KeyboardKey::KEY_S) {
+                    main_selection = (main_selection + 1) % 2;
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_UP) || window.is_key_pressed(KeyboardKey::KEY_W) {
+                    main_selection = (main_selection + 2 - 1) % 2;
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
+                    if main_selection == 0 {
+                        menu_state = MenuState::LevelSelect;
+                    } else {
+                        return MenuAction::Quit;
+                    }
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_Q) {
+                    return MenuAction::Quit;
+                }
+            }
+            MenuState::LevelSelect => {
+                if window.is_key_pressed(KeyboardKey::KEY_DOWN) || window.is_key_pressed(KeyboardKey::KEY_S) {
+                    level_selection = if level_selection < 3 { level_selection + 1 } else { 1 };
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_UP) || window.is_key_pressed(KeyboardKey::KEY_W) {
+                    level_selection = if level_selection > 1 { level_selection - 1 } else { 3 };
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
+                    return MenuAction::StartLevel(level_selection);
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+                    menu_state = MenuState::Main;
+                }
+                if window.is_key_pressed(KeyboardKey::KEY_Q) {
+                    return MenuAction::Quit;
+                }
+            }
         }
 
-        // draw overlay text via raylib (query sizes before begin_drawing)
+        // Draw overlay text via raylib
         let screen_w = window.get_screen_width();
         let screen_h = window.get_screen_height();
         if let Ok(texture) = window.load_texture_from_image(thread, &framebuffer.color_buffer) {
@@ -97,18 +129,41 @@ pub fn run_menu(window: &mut RaylibHandle, thread: &RaylibThread, framebuffer: &
             let origin = Vector2::new(0.0,0.0);
             d.draw_texture_pro(&texture, src, dest, origin, 0.0, Color::WHITE);
 
-            // draw two options centered near bottom
-            let opt_y = screen_h - 120;
             let cx = screen_w / 2;
-            let play_color = if selection == 0 { Color::YELLOW } else { Color::WHITE };
-            let quit_color = if selection == 1 { Color::YELLOW } else { Color::WHITE };
-            d.draw_text("JUGAR", cx - 40, opt_y, 40, play_color);
-            d.draw_text("SALIR", cx - 40, opt_y + 50, 40, quit_color);
+
+            match menu_state {
+                MenuState::Main => {
+                    // Draw main menu
+                    let opt_y = screen_h / 2 - 50;
+                    let play_color = if main_selection == 0 { Color::YELLOW } else { Color::WHITE };
+                    let quit_color = if main_selection == 1 { Color::YELLOW } else { Color::WHITE };
+                    d.draw_text("JUGAR", cx - 40, opt_y, 40, play_color);
+                    d.draw_text("SALIR", cx - 40, opt_y + 60, 40, quit_color);
+                }
+                MenuState::LevelSelect => {
+                    // Draw level selection
+                    let title_y = screen_h / 2 - 200;
+                    d.draw_text("SELECCIONAR NIVEL", cx - 150, title_y, 40, Color::WHITE);
+
+                    let level_y = screen_h / 2 - 80;
+                    
+                    let level1_color = if level_selection == 1 { Color::YELLOW } else { Color::WHITE };
+                    let level2_color = if level_selection == 2 { Color::YELLOW } else { Color::WHITE };
+                    let level3_color = if level_selection == 3 { Color::YELLOW } else { Color::WHITE };
+
+                    d.draw_text("NIVEL 1 - FACIL (2 fichas)", cx - 140, level_y, 30, level1_color);
+                    d.draw_text("NIVEL 2 - MEDIO (4 fichas)", cx - 150, level_y + 60, 30, level2_color);
+                    d.draw_text("NIVEL 3 - DIFICIL (6 fichas)", cx - 160, level_y + 120, 30, level3_color);
+
+                    // Instructions
+                    d.draw_text("ESC = Volver | ENTER = Jugar", cx - 140, level_y + 200, 20, Color::GRAY);
+                }
+            }
         }
 
-    // update audio streaming buffers for menu music
-    audio.update();
-    // small sleep to avoid busy loop
-    std::thread::sleep(std::time::Duration::from_millis(16));
+        // update audio streaming buffers for menu music
+        audio.update();
+        // small sleep to avoid busy loop
+        std::thread::sleep(std::time::Duration::from_millis(16));
     }
 }

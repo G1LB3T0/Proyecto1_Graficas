@@ -16,7 +16,7 @@ mod audio;
 mod anim;
 
 use line::line;
-use maze::{Maze,load_maze};
+use maze::{Maze,load_maze,load_maze_for_level};
 use caster::{cast_ray, Intersect};
 use framebuffer::Framebuffer;
 use player::{Player, process_events};
@@ -78,8 +78,10 @@ fn main() {
     audio.play_menu_track();
 
     // show main menu and handle selection
+    let mut current_level = 1;
     match menu::run_menu(&mut window, &raylib_thread, &mut framebuffer, &textures, &mut audio) {
-        menu::MenuAction::Start => {
+        menu::MenuAction::StartLevel(level) => {
+            current_level = level;
             // stop menu music and start gameplay music
             audio.stop_unload();
             audio.play_game_track();
@@ -90,7 +92,7 @@ fn main() {
         }
     }
 
-    let maze = load_maze("maze.txt");
+    let mut maze = load_maze_for_level(current_level);
 
         // DEBUG: print working directory and the resolved path of maze.txt so we know which file is loaded
         if let Ok(cwd) = env::current_dir() {
@@ -155,57 +157,89 @@ fn main() {
 
         // check for victory condition (player escaped through the door)
         if player_escaped {
-            // Victory screen: Enter to restart, Q to quit
-            loop {
-                framebuffer.clear();
+            if current_level < 3 {
+                // Advance to next level
+                current_level += 1;
+                maze = load_maze_for_level(current_level);
                 
-                // poll keys before drawing to avoid borrow conflicts
-                if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
-                    // reset player, npcs, coins, discovered and break to resume game
-                    player.pos = Vector2::new(150.0, 150.0);
-                    player.a = PI / 3.0;
-                    npcs = sprite::load_npcs_from_maze(&maze, block_size);
-                    coins = sprite::load_coins_from_maze(&maze, block_size);
-                    total_coins_collected = 0;
-                    discovered = maze.iter().map(|r| vec![false; r.len()]).collect();
-                    break;
-                }
-                if window.is_key_pressed(KeyboardKey::KEY_Q) {
-                    // cleanup audio and quit
-                    audio.cleanup();
-                    return;
-                }
-
-                // draw with raylib (query sizes first)
+                // Reset player, npcs, coins, discovered for next level
+                player.pos = Vector2::new(150.0, 150.0);
+                player.a = PI / 3.0;
+                npcs = sprite::load_npcs_from_maze(&maze, block_size);
+                coins = sprite::load_coins_from_maze(&maze, block_size);
+                total_coins_collected = 0;
+                discovered = maze.iter().map(|r| vec![false; r.len()]).collect();
+                
+                // Brief level transition screen
+                framebuffer.clear();
                 let screen_w = window.get_screen_width();
                 let screen_h = window.get_screen_height();
                 
-                // Clear framebuffer and draw victory background
-                let fbw = framebuffer.width;
-                let fbh = framebuffer.height;
-                
-                // If victoria texture exists, stretch it to cover the entire framebuffer
-                for y in 0..fbh {
-                    for x in 0..fbw {
-                        let u = x as f32 / fbw as f32;
-                        let v = y as f32 / fbh as f32;
-                        let col = textures.sample_victoria(u, v);
-                        framebuffer.set_current_color(col);
-                        framebuffer.set_pixel(x, y);
-                    }
-                }
-                
                 if let Ok(texture) = window.load_texture_from_image(&raylib_thread, &framebuffer.color_buffer) {
                     let mut d = window.begin_drawing(&raylib_thread);
-                    let src = Rectangle::new(0.0,0.0,framebuffer.width as f32, framebuffer.height as f32);
-                    let dest = Rectangle::new(0.0,0.0,screen_w as f32, screen_h as f32);
-                    d.draw_texture_pro(&texture, src, dest, Vector2::new(0.0,0.0), 0.0, Color::WHITE);
-                    
-                    // Draw controls
-                    d.draw_text("ENTER = REINICIAR  Q = SALIR", 24, 56, 16, Color::WHITE);
+                    d.clear_background(Color::BLACK);
+                    let level_text = format!("NIVEL {} - COMPLETADO!", current_level - 1);
+                    let next_text = format!("AVANZANDO AL NIVEL {}", current_level);
+                    d.draw_text(&level_text, screen_w / 2 - 200, screen_h / 2 - 50, 40, Color::GREEN);
+                    d.draw_text(&next_text, screen_w / 2 - 180, screen_h / 2 + 10, 30, Color::WHITE);
                 }
-                
-                thread::sleep(Duration::from_millis(16));
+                thread::sleep(Duration::from_millis(2000)); // Show for 2 seconds
+            } else {
+                // Completed all levels - Victory screen
+                loop {
+                    framebuffer.clear();
+                    
+                    // poll keys before drawing to avoid borrow conflicts
+                    if window.is_key_pressed(KeyboardKey::KEY_ENTER) {
+                        // reset to level 1
+                        current_level = 1;
+                        maze = load_maze_for_level(current_level);
+                        player.pos = Vector2::new(150.0, 150.0);
+                        player.a = PI / 3.0;
+                        npcs = sprite::load_npcs_from_maze(&maze, block_size);
+                        coins = sprite::load_coins_from_maze(&maze, block_size);
+                        total_coins_collected = 0;
+                        discovered = maze.iter().map(|r| vec![false; r.len()]).collect();
+                        break;
+                    }
+                    if window.is_key_pressed(KeyboardKey::KEY_Q) {
+                        // cleanup audio and quit
+                        audio.cleanup();
+                        return;
+                    }
+
+                    // draw with raylib (query sizes first)
+                    let screen_w = window.get_screen_width();
+                    let screen_h = window.get_screen_height();
+                    
+                    // Clear framebuffer and draw victory background
+                    let fbw = framebuffer.width;
+                    let fbh = framebuffer.height;
+                    
+                    // If victoria texture exists, stretch it to cover the entire framebuffer
+                    for y in 0..fbh {
+                        for x in 0..fbw {
+                            let u = x as f32 / fbw as f32;
+                            let v = y as f32 / fbh as f32;
+                            let col = textures.sample_victoria(u, v);
+                            framebuffer.set_current_color(col);
+                            framebuffer.set_pixel(x, y);
+                        }
+                    }
+                    
+                    if let Ok(texture) = window.load_texture_from_image(&raylib_thread, &framebuffer.color_buffer) {
+                        let mut d = window.begin_drawing(&raylib_thread);
+                        let src = Rectangle::new(0.0,0.0,framebuffer.width as f32, framebuffer.height as f32);
+                        let dest = Rectangle::new(0.0,0.0,screen_w as f32, screen_h as f32);
+                        d.draw_texture_pro(&texture, src, dest, Vector2::new(0.0,0.0), 0.0, Color::WHITE);
+                        
+                        // Draw victory text
+                        d.draw_text("¡TODOS LOS NIVELES COMPLETADOS!", screen_w / 2 - 280, screen_h / 2 - 100, 40, Color::YELLOW);
+                        d.draw_text("ENTER = REINICIAR  Q = SALIR", screen_w / 2 - 140, screen_h / 2 + 50, 20, Color::WHITE);
+                    }
+                    
+                    thread::sleep(Duration::from_millis(16));
+                }
             }
         }
 
@@ -283,7 +317,7 @@ fn main() {
 
     // 4. swap buffers (draw framebuffer with coin counter and FPS)
     let fps = window.get_fps();
-    framebuffer.swap_buffers_with_coins(&mut window, &raylib_thread, Some(fps as i32), total_coins_collected, coins.len());
+    framebuffer.swap_buffers_with_coins(&mut window, &raylib_thread, Some(fps as i32), total_coins_collected, coins.len(), current_level);
     
     // update music streaming buffers each frame
     audio.update();
