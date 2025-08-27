@@ -145,8 +145,13 @@ fn main() {
         let player_dead = sprite::update_npcs(&mut npcs, &player, &maze, block_size, doors_open);
         
         // update coins and check for collection
-        let coins_collected_this_frame = sprite::update_coins(&mut coins, &player, block_size);
+        let (coins_collected_this_frame, coin_collected) = sprite::update_coins(&mut coins, &player, block_size);
         total_coins_collected += coins_collected_this_frame;
+        
+        // play coin sound if any coin was collected
+        if coin_collected {
+            audio.play_coin_sound();
+        }
 
         // check for victory condition (player escaped through the door)
         if player_escaped {

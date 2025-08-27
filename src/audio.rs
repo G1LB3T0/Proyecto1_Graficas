@@ -4,17 +4,25 @@ use std::path::Path;
 pub struct AudioManager {
     initialized: bool,
     music: Option<raylib::ffi::Music>,
+    coin_sound: Option<raylib::ffi::Sound>,
 }
 
 impl AudioManager {
     pub fn new() -> Self {
-        Self { initialized: false, music: None }
+        Self { 
+            initialized: false, 
+            music: None,
+            coin_sound: None,
+        }
     }
 
     pub fn init(&mut self) {
         if !self.initialized {
             unsafe { raylib::ffi::InitAudioDevice(); }
             self.initialized = true;
+            
+            // Load coin collection sound
+            self.load_coin_sound();
         }
     }
 
@@ -109,8 +117,46 @@ impl AudioManager {
         }
     }
 
+    fn load_coin_sound(&mut self) {
+        // Try to load the poker chip sound effect
+        let coin_sound_path = "sounds/coin_sound.ogg";
+        if Path::new(coin_sound_path).exists() {
+            unsafe {
+                if let Ok(cpath) = CString::new(coin_sound_path.to_string()) {
+                    let sound = raylib::ffi::LoadSound(cpath.as_ptr());
+                    if raylib::ffi::IsSoundValid(sound) {
+                        self.coin_sound = Some(sound);
+                        eprintln!("[info] loaded coin sound: {}", coin_sound_path);
+                    } else {
+                        eprintln!("[warn] failed to load coin sound: {}", coin_sound_path);
+                    }
+                } else {
+                    eprintln!("[warn] invalid coin sound path: {}", coin_sound_path);
+                }
+            }
+        } else {
+            eprintln!("[warn] coin sound file not found: {}", coin_sound_path);
+        }
+    }
+
+    pub fn play_coin_sound(&self) {
+        if let Some(sound) = self.coin_sound {
+            unsafe {
+                raylib::ffi::PlaySound(sound);
+            }
+        }
+    }
+
     pub fn cleanup(&mut self) {
         self.stop_unload();
+        
+        // Unload coin sound
+        if let Some(sound) = self.coin_sound.take() {
+            unsafe {
+                raylib::ffi::UnloadSound(sound);
+            }
+        }
+        
         if self.initialized {
             unsafe { raylib::ffi::CloseAudioDevice(); }
             self.initialized = false;

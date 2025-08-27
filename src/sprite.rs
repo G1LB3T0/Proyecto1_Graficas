@@ -238,8 +238,9 @@ pub fn update_npcs(npcs: &mut Vec<NPC>, player: &Player, maze: &Maze, block_size
     touched
 }
 
-pub fn update_coins(coins: &mut Vec<Coin>, player: &Player, block_size: usize) -> usize {
+pub fn update_coins(coins: &mut Vec<Coin>, player: &Player, block_size: usize) -> (usize, bool) {
     let mut collected_count = 0;
+    let mut any_collected = false;
     let collection_distance = (block_size as f32) * 0.4; // slightly larger collection radius
     
     for coin in coins.iter_mut() {
@@ -258,10 +259,11 @@ pub fn update_coins(coins: &mut Vec<Coin>, player: &Player, block_size: usize) -
         if distance <= collection_distance {
             coin.collected = true;
             collected_count += 1;
+            any_collected = true;
         }
     }
     
-    collected_count
+    (collected_count, any_collected)
 }
 
 pub fn render_npcs(framebuffer: &mut Framebuffer, textures: &TextureAtlas, player: &Player, npcs: &Vec<NPC>) {
